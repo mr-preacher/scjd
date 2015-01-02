@@ -1,0 +1,49 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Overview</title>
+</head>
+
+<body>
+
+<h1 align="center">Overview</h1>
+<hr>
+<p>File <code>scjda-sr3444488.jar</code> contains performed task for SCJD certification.</p>
+<p>To extract files from jar file into current directory user can use command line:</p>
+<pre>
+jar -xf scjda-sr3444488.jar
+</pre> 
+<p>SCJD application has three modes (also knows as types). Each of them uses specific command of console to 
+start.</p>
+<table border = "1">
+	<tr>
+		<td width = "100" align = "center" >Mode</td>
+		<td width = "150" align = "center" >Description</td>
+		<td align="center">Command</td>
+	</tr>
+	<tr>
+		<td width = "100"><a href="server.htm">Server</a></td>
+		<td  width = "150">Network server mode</td>
+		<td><code>java -jar runme.jar server</code></td>
+	</tr>
+	<tr>
+		<td  width = "100"><a href="client.htm">Client</a></td>
+		<td  width = "150">Network client mode</td>
+		<td><code>java -jar runme.jar</code></td>
+	</tr>
+    <tr>
+		<td  width = "100"><a href="alone.htm">Standalone</a></td>
+		<td  width = "150">Local standalone mode</td>
+		<td><code>java -jar runme.jar alone</code></td>
+	</tr>
+</table>
+<p>These commands must be typed when user is in application directory.</p>
+<p>Application directory is the directory that contains <code>runme.jar</code> 
+file and 
+<code>suncertify.properties</code> file.</p>
+<p>To gain access to application directory user can use shell command <code>cd</code>.</p>
+</body>
+
+</html>

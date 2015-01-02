@@ -1,0 +1,11 @@
+========================================
+JDK version used
+java 1.6.16
+----------------------------------------
+Host platform worked on
+Microsoft Windows Vista Home Premium SP2
+----------------------------------------
+Tested on
+Microsoft Windows Vista Home Premium SP2
+Ubuntu 9.04 
+========================================

@@ -1,0 +1,645 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    package suncertify.db;<a name="line.1"></a>
+<FONT color="green">002</FONT>    <a name="line.2"></a>
+<FONT color="green">003</FONT>    import java.io.File;<a name="line.3"></a>
+<FONT color="green">004</FONT>    import java.io.IOException;<a name="line.4"></a>
+<FONT color="green">005</FONT>    import java.io.RandomAccessFile;<a name="line.5"></a>
+<FONT color="green">006</FONT>    import java.io.UnsupportedEncodingException;<a name="line.6"></a>
+<FONT color="green">007</FONT>    import java.util.Arrays;<a name="line.7"></a>
+<FONT color="green">008</FONT>    import java.util.HashSet;<a name="line.8"></a>
+<FONT color="green">009</FONT>    import java.util.Iterator;<a name="line.9"></a>
+<FONT color="green">010</FONT>    import java.util.Map;<a name="line.10"></a>
+<FONT color="green">011</FONT>    import java.util.Set;<a name="line.11"></a>
+<FONT color="green">012</FONT>    import java.util.concurrent.ConcurrentHashMap;<a name="line.12"></a>
+<FONT color="green">013</FONT>    import java.util.concurrent.locks.ReentrantReadWriteLock;<a name="line.13"></a>
+<FONT color="green">014</FONT>    import java.util.logging.Level;<a name="line.14"></a>
+<FONT color="green">015</FONT>    import java.util.logging.Logger;<a name="line.15"></a>
+<FONT color="green">016</FONT>    import suncertify.db.utils.WeakHashSet;<a name="line.16"></a>
+<FONT color="green">017</FONT>    <a name="line.17"></a>
+<FONT color="green">018</FONT>    /**<a name="line.18"></a>
+<FONT color="green">019</FONT>     * Class &lt;code&gt;Data&lt;/code&gt; implements interface {@link DBAccess} provides<a name="line.19"></a>
+<FONT color="green">020</FONT>     * methods to operate a database file on local hard drive.<a name="line.20"></a>
+<FONT color="green">021</FONT>     * <a name="line.21"></a>
+<FONT color="green">022</FONT>     * @author Petr Shilkin<a name="line.22"></a>
+<FONT color="green">023</FONT>     * @version 1.0<a name="line.23"></a>
+<FONT color="green">024</FONT>     */<a name="line.24"></a>
+<FONT color="green">025</FONT>    public class Data implements DBAccess {<a name="line.25"></a>
+<FONT color="green">026</FONT>            /**<a name="line.26"></a>
+<FONT color="green">027</FONT>             * "field name" size, length in the header of file for each record<a name="line.27"></a>
+<FONT color="green">028</FONT>             */<a name="line.28"></a>
+<FONT color="green">029</FONT>            private static int fn_len = 1;<a name="line.29"></a>
+<FONT color="green">030</FONT>            /**<a name="line.30"></a>
+<FONT color="green">031</FONT>             * "field size" size, length in the header of file for each record<a name="line.31"></a>
+<FONT color="green">032</FONT>             */<a name="line.32"></a>
+<FONT color="green">033</FONT>            private static int fl_len = 1;<a name="line.33"></a>
+<FONT color="green">034</FONT>    <a name="line.34"></a>
+<FONT color="green">035</FONT>            /**<a name="line.35"></a>
+<FONT color="green">036</FONT>             * "number of fields" size, length in the header of file for entire database<a name="line.36"></a>
+<FONT color="green">037</FONT>             * file<a name="line.37"></a>
+<FONT color="green">038</FONT>             */<a name="line.38"></a>
+<FONT color="green">039</FONT>            private static final int nof_len = 2;<a name="line.39"></a>
+<FONT color="green">040</FONT>    <a name="line.40"></a>
+<FONT color="green">041</FONT>            /**<a name="line.41"></a>
+<FONT color="green">042</FONT>             * magic cookie value captioned from database file<a name="line.42"></a>
+<FONT color="green">043</FONT>             */<a name="line.43"></a>
+<FONT color="green">044</FONT>            private static final byte[] mc_value = new byte[] { 0x00, 0x00, 0x02, 0x03 };<a name="line.44"></a>
+<FONT color="green">045</FONT>    <a name="line.45"></a>
+<FONT color="green">046</FONT>            /**<a name="line.46"></a>
+<FONT color="green">047</FONT>             * character encoding of database file<a name="line.47"></a>
+<FONT color="green">048</FONT>             */<a name="line.48"></a>
+<FONT color="green">049</FONT>            private final static String encoding = "US-ASCII";<a name="line.49"></a>
+<FONT color="green">050</FONT>            /**<a name="line.50"></a>
+<FONT color="green">051</FONT>             * defined number of first record in database file<a name="line.51"></a>
+<FONT color="green">052</FONT>             */<a name="line.52"></a>
+<FONT color="green">053</FONT>            protected final static int FIRST_RECNO = 0;<a name="line.53"></a>
+<FONT color="green">054</FONT>            /**<a name="line.54"></a>
+<FONT color="green">055</FONT>             * space byte for fields that have not enough length<a name="line.55"></a>
+<FONT color="green">056</FONT>             */<a name="line.56"></a>
+<FONT color="green">057</FONT>            private final static byte space_byte = (byte) 0x20;<a name="line.57"></a>
+<FONT color="green">058</FONT>            /*<a name="line.58"></a>
+<FONT color="green">059</FONT>             * calculating length of record<a name="line.59"></a>
+<FONT color="green">060</FONT>             */<a name="line.60"></a>
+<FONT color="green">061</FONT>            static {<a name="line.61"></a>
+<FONT color="green">062</FONT>                    int temp = 0;<a name="line.62"></a>
+<FONT color="green">063</FONT>                    for (int fl : FIELD_LENGTH) {<a name="line.63"></a>
+<FONT color="green">064</FONT>                            temp += fl;<a name="line.64"></a>
+<FONT color="green">065</FONT>                    }<a name="line.65"></a>
+<FONT color="green">066</FONT>                    record_length = temp;<a name="line.66"></a>
+<FONT color="green">067</FONT>            }<a name="line.67"></a>
+<FONT color="green">068</FONT>    <a name="line.68"></a>
+<FONT color="green">069</FONT>            /*<a name="line.69"></a>
+<FONT color="green">070</FONT>             * calculating header size of database file<a name="line.70"></a>
+<FONT color="green">071</FONT>             */<a name="line.71"></a>
+<FONT color="green">072</FONT>            static {<a name="line.72"></a>
+<FONT color="green">073</FONT>                    int temp = 0;<a name="line.73"></a>
+<FONT color="green">074</FONT>                    temp += mc_value.length;<a name="line.74"></a>
+<FONT color="green">075</FONT>                    temp += nof_len;<a name="line.75"></a>
+<FONT color="green">076</FONT>                    for (String fn : FIELD_SEQUENCE) {<a name="line.76"></a>
+<FONT color="green">077</FONT>                            temp += fn_len;<a name="line.77"></a>
+<FONT color="green">078</FONT>                            try {<a name="line.78"></a>
+<FONT color="green">079</FONT>                                    temp += fn.getBytes(encoding).length;<a name="line.79"></a>
+<FONT color="green">080</FONT>                            } catch (UnsupportedEncodingException e) {<a name="line.80"></a>
+<FONT color="green">081</FONT>                            }<a name="line.81"></a>
+<FONT color="green">082</FONT>                            temp += fl_len;<a name="line.82"></a>
+<FONT color="green">083</FONT>    <a name="line.83"></a>
+<FONT color="green">084</FONT>                    }<a name="line.84"></a>
+<FONT color="green">085</FONT>                    header_offset = temp;<a name="line.85"></a>
+<FONT color="green">086</FONT>            }<a name="line.86"></a>
+<FONT color="green">087</FONT>    <a name="line.87"></a>
+<FONT color="green">088</FONT>            /**<a name="line.88"></a>
+<FONT color="green">089</FONT>             * logger is for debugging purposes<a name="line.89"></a>
+<FONT color="green">090</FONT>             */<a name="line.90"></a>
+<FONT color="green">091</FONT>            private Logger log = Logger.getLogger(this.getClass().getPackage().getName());<a name="line.91"></a>
+<FONT color="green">092</FONT>            /**<a name="line.92"></a>
+<FONT color="green">093</FONT>             * set of record numbers of the deleted records<a name="line.93"></a>
+<FONT color="green">094</FONT>             */<a name="line.94"></a>
+<FONT color="green">095</FONT>            private final Set&lt;Long&gt; deleted = new HashSet&lt;Long&gt;();<a name="line.95"></a>
+<FONT color="green">096</FONT>            /**<a name="line.96"></a>
+<FONT color="green">097</FONT>             * deleted flag byte value<a name="line.97"></a>
+<FONT color="green">098</FONT>             */<a name="line.98"></a>
+<FONT color="green">099</FONT>            private final static byte deletedrecbyte = (byte) 0xFF;<a name="line.99"></a>
+<FONT color="green">100</FONT>            /**<a name="line.100"></a>
+<FONT color="green">101</FONT>             * random access file reference to operate database file<a name="line.101"></a>
+<FONT color="green">102</FONT>             */<a name="line.102"></a>
+<FONT color="green">103</FONT>            private RandomAccessFile file;<a name="line.103"></a>
+<FONT color="green">104</FONT>            /**<a name="line.104"></a>
+<FONT color="green">105</FONT>             * "deleted flag" size, length for each record<a name="line.105"></a>
+<FONT color="green">106</FONT>             */<a name="line.106"></a>
+<FONT color="green">107</FONT>            private final static int flaglength = 1;<a name="line.107"></a>
+<FONT color="green">108</FONT>            /**<a name="line.108"></a>
+<FONT color="green">109</FONT>             * data section offset, length between beginning on database file and first<a name="line.109"></a>
+<FONT color="green">110</FONT>             * record<a name="line.110"></a>
+<FONT color="green">111</FONT>             */<a name="line.111"></a>
+<FONT color="green">112</FONT>            private static int header_offset;<a name="line.112"></a>
+<FONT color="green">113</FONT>            /**<a name="line.113"></a>
+<FONT color="green">114</FONT>             * Map of locks for locked record numbers. Key of map is unique object for<a name="line.114"></a>
+<FONT color="green">115</FONT>             * record number, value is locking descriptor ("cookie").<a name="line.115"></a>
+<FONT color="green">116</FONT>             */<a name="line.116"></a>
+<FONT color="green">117</FONT>            private final Map&lt;Long, Long&gt; locks = new ConcurrentHashMap&lt;Long, Long&gt;();<a name="line.117"></a>
+<FONT color="green">118</FONT>            /**<a name="line.118"></a>
+<FONT color="green">119</FONT>             * Cache of unique objects that is used in the functionality<a name="line.119"></a>
+<FONT color="green">120</FONT>             * "one lock"-"one record". Unique objects needed to perform valid blocking on<a name="line.120"></a>
+<FONT color="green">121</FONT>             * the same record numbers. Using this cache allows to lock/unlock records<a name="line.121"></a>
+<FONT color="green">122</FONT>             * separately each from other.<a name="line.122"></a>
+<FONT color="green">123</FONT>             */<a name="line.123"></a>
+<FONT color="green">124</FONT>            private final WeakHashSet&lt;Long&gt; numberCache = new WeakHashSet&lt;Long&gt;();<a name="line.124"></a>
+<FONT color="green">125</FONT>            /**<a name="line.125"></a>
+<FONT color="green">126</FONT>             * reference to helper object for file reading/writing<a name="line.126"></a>
+<FONT color="green">127</FONT>             */<a name="line.127"></a>
+<FONT color="green">128</FONT>            private final ReaderWriter readerwriter = new ReaderWriter();<a name="line.128"></a>
+<FONT color="green">129</FONT>            /**<a name="line.129"></a>
+<FONT color="green">130</FONT>             * record length without "deleted flag"<a name="line.130"></a>
+<FONT color="green">131</FONT>             */<a name="line.131"></a>
+<FONT color="green">132</FONT>            private final static int record_length;<a name="line.132"></a>
+<FONT color="green">133</FONT>            /**<a name="line.133"></a>
+<FONT color="green">134</FONT>             * Read/write blocking for &lt;code&gt;valid&lt;/code&gt; and &lt;code&gt;deleted&lt;/code&gt; sets.<a name="line.134"></a>
+<FONT color="green">135</FONT>             * Many clients can read these sets but only one at time can write to sets.<a name="line.135"></a>
+<FONT color="green">136</FONT>             * While writing is in progress reading can not be done.<a name="line.136"></a>
+<FONT color="green">137</FONT>             */<a name="line.137"></a>
+<FONT color="green">138</FONT>            private final ReentrantReadWriteLock rwlock = new ReentrantReadWriteLock();<a name="line.138"></a>
+<FONT color="green">139</FONT>            /**<a name="line.139"></a>
+<FONT color="green">140</FONT>             * Valid, i.e. not deleted, record numbers set<a name="line.140"></a>
+<FONT color="green">141</FONT>             */<a name="line.141"></a>
+<FONT color="green">142</FONT>            private final Set&lt;Long&gt; valid = new HashSet&lt;Long&gt;();<a name="line.142"></a>
+<FONT color="green">143</FONT>    <a name="line.143"></a>
+<FONT color="green">144</FONT>            /**<a name="line.144"></a>
+<FONT color="green">145</FONT>             * valid flag byte value<a name="line.145"></a>
+<FONT color="green">146</FONT>             */<a name="line.146"></a>
+<FONT color="green">147</FONT>            private final static byte validrecbyte = 0x00;<a name="line.147"></a>
+<FONT color="green">148</FONT>    <a name="line.148"></a>
+<FONT color="green">149</FONT>            /**<a name="line.149"></a>
+<FONT color="green">150</FONT>             * amount of all (deleted and valid) records in database file<a name="line.150"></a>
+<FONT color="green">151</FONT>             */<a name="line.151"></a>
+<FONT color="green">152</FONT>            private long recordCount;<a name="line.152"></a>
+<FONT color="green">153</FONT>    <a name="line.153"></a>
+<FONT color="green">154</FONT>            /**<a name="line.154"></a>
+<FONT color="green">155</FONT>             * Constructor creates database operating object to operate database file on<a name="line.155"></a>
+<FONT color="green">156</FONT>             * local hard drive.<a name="line.156"></a>
+<FONT color="green">157</FONT>             * <a name="line.157"></a>
+<FONT color="green">158</FONT>             * @param path<a name="line.158"></a>
+<FONT color="green">159</FONT>             *         local path to a database file<a name="line.159"></a>
+<FONT color="green">160</FONT>             * @throws IOException<a name="line.160"></a>
+<FONT color="green">161</FONT>             *          on read or write error<a name="line.161"></a>
+<FONT color="green">162</FONT>             */<a name="line.162"></a>
+<FONT color="green">163</FONT>            public Data(String path) throws IOException {<a name="line.163"></a>
+<FONT color="green">164</FONT>    <a name="line.164"></a>
+<FONT color="green">165</FONT>                    File file = new File(path);<a name="line.165"></a>
+<FONT color="green">166</FONT>                    this.file = new RandomAccessFile(file, "rw");<a name="line.166"></a>
+<FONT color="green">167</FONT>                    try {<a name="line.167"></a>
+<FONT color="green">168</FONT>                            readerwriter.checkheader();<a name="line.168"></a>
+<FONT color="green">169</FONT>                    } catch (IOException e) {<a name="line.169"></a>
+<FONT color="green">170</FONT>                            log.log(Level.SEVERE, "wrong data file format");<a name="line.170"></a>
+<FONT color="green">171</FONT>                            throw e;<a name="line.171"></a>
+<FONT color="green">172</FONT>                    }<a name="line.172"></a>
+<FONT color="green">173</FONT>                    buildIndex();<a name="line.173"></a>
+<FONT color="green">174</FONT>            }<a name="line.174"></a>
+<FONT color="green">175</FONT>    <a name="line.175"></a>
+<FONT color="green">176</FONT>            /**<a name="line.176"></a>
+<FONT color="green">177</FONT>             * {@inheritDoc}<a name="line.177"></a>
+<FONT color="green">178</FONT>             */<a name="line.178"></a>
+<FONT color="green">179</FONT>            public long createRecord(String[] data) {<a name="line.179"></a>
+<FONT color="green">180</FONT>                    rwlock.writeLock().lock();<a name="line.180"></a>
+<FONT color="green">181</FONT>                    try {<a name="line.181"></a>
+<FONT color="green">182</FONT>                            Iterator&lt;Long&gt; it = deleted.iterator();<a name="line.182"></a>
+<FONT color="green">183</FONT>                            boolean reuse;<a name="line.183"></a>
+<FONT color="green">184</FONT>                            Long recNo;<a name="line.184"></a>
+<FONT color="green">185</FONT>                            if (reuse = it.hasNext()) {<a name="line.185"></a>
+<FONT color="green">186</FONT>                                    recNo = it.next();<a name="line.186"></a>
+<FONT color="green">187</FONT>                            } else {<a name="line.187"></a>
+<FONT color="green">188</FONT>                                    recNo = recordCount;<a name="line.188"></a>
+<FONT color="green">189</FONT>                            }<a name="line.189"></a>
+<FONT color="green">190</FONT>                            long pos = getRecPos(recNo);<a name="line.190"></a>
+<FONT color="green">191</FONT>                            readerwriter.write(pos, validrecbyte);<a name="line.191"></a>
+<FONT color="green">192</FONT>                            readerwriter.write(pos + flaglength, data);<a name="line.192"></a>
+<FONT color="green">193</FONT>                            valid.add(recNo);<a name="line.193"></a>
+<FONT color="green">194</FONT>                            if (reuse) {<a name="line.194"></a>
+<FONT color="green">195</FONT>                                    deleted.remove(recNo);<a name="line.195"></a>
+<FONT color="green">196</FONT>                            } else {<a name="line.196"></a>
+<FONT color="green">197</FONT>                                    recordCount++;<a name="line.197"></a>
+<FONT color="green">198</FONT>                            }<a name="line.198"></a>
+<FONT color="green">199</FONT>                            return recNo;<a name="line.199"></a>
+<FONT color="green">200</FONT>                    } catch (IOException e) {<a name="line.200"></a>
+<FONT color="green">201</FONT>                            throw new RuntimeException("error writing file", e);<a name="line.201"></a>
+<FONT color="green">202</FONT>                    } finally {<a name="line.202"></a>
+<FONT color="green">203</FONT>                            rwlock.writeLock().unlock();<a name="line.203"></a>
+<FONT color="green">204</FONT>                    }<a name="line.204"></a>
+<FONT color="green">205</FONT>            }<a name="line.205"></a>
+<FONT color="green">206</FONT>    <a name="line.206"></a>
+<FONT color="green">207</FONT>            /**<a name="line.207"></a>
+<FONT color="green">208</FONT>             * {@inheritDoc}<a name="line.208"></a>
+<FONT color="green">209</FONT>             */<a name="line.209"></a>
+<FONT color="green">210</FONT>            public void deleteRecord(long recNo, long lockCookie)<a name="line.210"></a>
+<FONT color="green">211</FONT>                            throws RecordNotFoundException, SecurityException {<a name="line.211"></a>
+<FONT color="green">212</FONT>                    Object recNoMutex = getMutexForRecNo(recNo);<a name="line.212"></a>
+<FONT color="green">213</FONT>                    checkLockCookie(recNo, recNoMutex, lockCookie);<a name="line.213"></a>
+<FONT color="green">214</FONT>                    rwlock.writeLock().lock();<a name="line.214"></a>
+<FONT color="green">215</FONT>                    try {<a name="line.215"></a>
+<FONT color="green">216</FONT>                            if (!valid.contains(recNo))<a name="line.216"></a>
+<FONT color="green">217</FONT>                                    throw new RecordNotFoundException();<a name="line.217"></a>
+<FONT color="green">218</FONT>                            long pos = getRecPos(recNo);<a name="line.218"></a>
+<FONT color="green">219</FONT>                            readerwriter.write(pos, deletedrecbyte);<a name="line.219"></a>
+<FONT color="green">220</FONT>                            valid.remove(recNo);<a name="line.220"></a>
+<FONT color="green">221</FONT>                            deleted.add(recNo);<a name="line.221"></a>
+<FONT color="green">222</FONT>                    } catch (IOException e) {<a name="line.222"></a>
+<FONT color="green">223</FONT>                            throw new RuntimeException("error writing file", e);<a name="line.223"></a>
+<FONT color="green">224</FONT>                    } finally {<a name="line.224"></a>
+<FONT color="green">225</FONT>                            rwlock.writeLock().unlock();<a name="line.225"></a>
+<FONT color="green">226</FONT>                    }<a name="line.226"></a>
+<FONT color="green">227</FONT>            }<a name="line.227"></a>
+<FONT color="green">228</FONT>    <a name="line.228"></a>
+<FONT color="green">229</FONT>            /**<a name="line.229"></a>
+<FONT color="green">230</FONT>             * Performs clean-up of unused object.<a name="line.230"></a>
+<FONT color="green">231</FONT>             */<a name="line.231"></a>
+<FONT color="green">232</FONT>            protected void finalize() {<a name="line.232"></a>
+<FONT color="green">233</FONT>                    close();<a name="line.233"></a>
+<FONT color="green">234</FONT>            }<a name="line.234"></a>
+<FONT color="green">235</FONT>    <a name="line.235"></a>
+<FONT color="green">236</FONT>            /**<a name="line.236"></a>
+<FONT color="green">237</FONT>             * {@inheritDoc}<a name="line.237"></a>
+<FONT color="green">238</FONT>             */<a name="line.238"></a>
+<FONT color="green">239</FONT>            public long[] findByCriteria(String[] criteria) {<a name="line.239"></a>
+<FONT color="green">240</FONT>                    long[] result = new long[valid.size()];<a name="line.240"></a>
+<FONT color="green">241</FONT>                    int count = 0;<a name="line.241"></a>
+<FONT color="green">242</FONT>                    for (Long recNo : valid) {<a name="line.242"></a>
+<FONT color="green">243</FONT>                            try {<a name="line.243"></a>
+<FONT color="green">244</FONT>                                    String[] data = readRecord(recNo);<a name="line.244"></a>
+<FONT color="green">245</FONT>                                    if (checkCriteria(data, criteria)) {<a name="line.245"></a>
+<FONT color="green">246</FONT>                                            result[count] = recNo;<a name="line.246"></a>
+<FONT color="green">247</FONT>                                            count++;<a name="line.247"></a>
+<FONT color="green">248</FONT>                                    }<a name="line.248"></a>
+<FONT color="green">249</FONT>                            } catch (RecordNotFoundException e) {<a name="line.249"></a>
+<FONT color="green">250</FONT>                                    log.log(Level.SEVERE, "record was valid but now not found");<a name="line.250"></a>
+<FONT color="green">251</FONT>                            }<a name="line.251"></a>
+<FONT color="green">252</FONT>                    }<a name="line.252"></a>
+<FONT color="green">253</FONT>                    long[] cutresult = new long[count];<a name="line.253"></a>
+<FONT color="green">254</FONT>                    System.arraycopy(result, 0, cutresult, 0, count);<a name="line.254"></a>
+<FONT color="green">255</FONT>                    return cutresult;<a name="line.255"></a>
+<FONT color="green">256</FONT>            }<a name="line.256"></a>
+<FONT color="green">257</FONT>    <a name="line.257"></a>
+<FONT color="green">258</FONT>            /**<a name="line.258"></a>
+<FONT color="green">259</FONT>             * {@inheritDoc}<a name="line.259"></a>
+<FONT color="green">260</FONT>             */<a name="line.260"></a>
+<FONT color="green">261</FONT>            public long lockRecord(long recNo) throws RecordNotFoundException {<a name="line.261"></a>
+<FONT color="green">262</FONT>                    log.log(Level.SEVERE, "lock record: " + recNo);<a name="line.262"></a>
+<FONT color="green">263</FONT>                    Object recNoMutex = getMutexForRecNo(recNo);<a name="line.263"></a>
+<FONT color="green">264</FONT>                    long lockCookie = 0;<a name="line.264"></a>
+<FONT color="green">265</FONT>                    synchronized (recNoMutex) {<a name="line.265"></a>
+<FONT color="green">266</FONT>                            while (locks.containsKey(recNo)) {<a name="line.266"></a>
+<FONT color="green">267</FONT>                                    try {<a name="line.267"></a>
+<FONT color="green">268</FONT>                                            recNoMutex.wait();<a name="line.268"></a>
+<FONT color="green">269</FONT>                                    } catch (InterruptedException e) {<a name="line.269"></a>
+<FONT color="green">270</FONT>                                            throw new RuntimeException(e);<a name="line.270"></a>
+<FONT color="green">271</FONT>                                    }<a name="line.271"></a>
+<FONT color="green">272</FONT>                            }<a name="line.272"></a>
+<FONT color="green">273</FONT>                            rwlock.readLock().lock();<a name="line.273"></a>
+<FONT color="green">274</FONT>                            try {<a name="line.274"></a>
+<FONT color="green">275</FONT>                                    if (!valid.contains(recNo))<a name="line.275"></a>
+<FONT color="green">276</FONT>                                            throw new RecordNotFoundException("invalid record number " + recNo);<a name="line.276"></a>
+<FONT color="green">277</FONT>                                    lockCookie = System.nanoTime();<a name="line.277"></a>
+<FONT color="green">278</FONT>                                    locks.put(recNo, lockCookie);<a name="line.278"></a>
+<FONT color="green">279</FONT>                            } finally {<a name="line.279"></a>
+<FONT color="green">280</FONT>                                    rwlock.readLock().unlock();<a name="line.280"></a>
+<FONT color="green">281</FONT>                            }<a name="line.281"></a>
+<FONT color="green">282</FONT>                    }<a name="line.282"></a>
+<FONT color="green">283</FONT>                    log<a name="line.283"></a>
+<FONT color="green">284</FONT>                                    .log(Level.SEVERE, "record " + recNo + " locked with cookie " + lockCookie);<a name="line.284"></a>
+<FONT color="green">285</FONT>                    return lockCookie;<a name="line.285"></a>
+<FONT color="green">286</FONT>    <a name="line.286"></a>
+<FONT color="green">287</FONT>            }<a name="line.287"></a>
+<FONT color="green">288</FONT>    <a name="line.288"></a>
+<FONT color="green">289</FONT>            /**<a name="line.289"></a>
+<FONT color="green">290</FONT>             * {@inheritDoc}<a name="line.290"></a>
+<FONT color="green">291</FONT>             */<a name="line.291"></a>
+<FONT color="green">292</FONT>            public String[] readRecord(long recNo) throws RecordNotFoundException {<a name="line.292"></a>
+<FONT color="green">293</FONT>                    rwlock.readLock().lock();<a name="line.293"></a>
+<FONT color="green">294</FONT>                    try {<a name="line.294"></a>
+<FONT color="green">295</FONT>                            if (!valid.contains(recNo))<a name="line.295"></a>
+<FONT color="green">296</FONT>                                    throw new RecordNotFoundException();<a name="line.296"></a>
+<FONT color="green">297</FONT>                            long pos = getRecPos(recNo);<a name="line.297"></a>
+<FONT color="green">298</FONT>                            String[] data = readerwriter.readData(pos + flaglength);<a name="line.298"></a>
+<FONT color="green">299</FONT>                            return data;<a name="line.299"></a>
+<FONT color="green">300</FONT>                    } catch (IOException e) {<a name="line.300"></a>
+<FONT color="green">301</FONT>                            throw new RuntimeException(e);<a name="line.301"></a>
+<FONT color="green">302</FONT>                    } finally {<a name="line.302"></a>
+<FONT color="green">303</FONT>                            rwlock.readLock().unlock();<a name="line.303"></a>
+<FONT color="green">304</FONT>                    }<a name="line.304"></a>
+<FONT color="green">305</FONT>            }<a name="line.305"></a>
+<FONT color="green">306</FONT>    <a name="line.306"></a>
+<FONT color="green">307</FONT>            /**<a name="line.307"></a>
+<FONT color="green">308</FONT>             * {@inheritDoc}<a name="line.308"></a>
+<FONT color="green">309</FONT>             */<a name="line.309"></a>
+<FONT color="green">310</FONT>            public void unlock(long recNo, long cookie) throws SecurityException {<a name="line.310"></a>
+<FONT color="green">311</FONT>                    log.log(Level.SEVERE, "unlock: " + recNo + ", " + cookie);<a name="line.311"></a>
+<FONT color="green">312</FONT>                    Object recNoMutex = getMutexForRecNo(recNo);<a name="line.312"></a>
+<FONT color="green">313</FONT>                    synchronized (recNoMutex) {<a name="line.313"></a>
+<FONT color="green">314</FONT>                            Long lock = locks.get(recNo);<a name="line.314"></a>
+<FONT color="green">315</FONT>                            if (lock != null &amp;&amp; lock.longValue() == cookie) {<a name="line.315"></a>
+<FONT color="green">316</FONT>                                    locks.remove(recNo);<a name="line.316"></a>
+<FONT color="green">317</FONT>                                    recNoMutex.notifyAll();<a name="line.317"></a>
+<FONT color="green">318</FONT>                            } else {<a name="line.318"></a>
+<FONT color="green">319</FONT>                                    throw new SecurityException("invalid unlock cookie");<a name="line.319"></a>
+<FONT color="green">320</FONT>                            }<a name="line.320"></a>
+<FONT color="green">321</FONT>                    }<a name="line.321"></a>
+<FONT color="green">322</FONT>            }<a name="line.322"></a>
+<FONT color="green">323</FONT>    <a name="line.323"></a>
+<FONT color="green">324</FONT>            /**<a name="line.324"></a>
+<FONT color="green">325</FONT>             * {@inheritDoc}<a name="line.325"></a>
+<FONT color="green">326</FONT>             */<a name="line.326"></a>
+<FONT color="green">327</FONT>            public void updateRecord(long recNo, String[] data, long lockCookie)<a name="line.327"></a>
+<FONT color="green">328</FONT>                            throws RecordNotFoundException, SecurityException {<a name="line.328"></a>
+<FONT color="green">329</FONT>                    log.log(Level.SEVERE, "update: " + recNo + ", " + lockCookie);<a name="line.329"></a>
+<FONT color="green">330</FONT>                    Object recNoMutex = getMutexForRecNo(recNo);<a name="line.330"></a>
+<FONT color="green">331</FONT>                    checkLockCookie(recNo, recNoMutex, lockCookie);<a name="line.331"></a>
+<FONT color="green">332</FONT>                    rwlock.readLock().lock();<a name="line.332"></a>
+<FONT color="green">333</FONT>                    try {<a name="line.333"></a>
+<FONT color="green">334</FONT>                            if (!valid.contains(recNo))<a name="line.334"></a>
+<FONT color="green">335</FONT>                                    throw new RecordNotFoundException("invalid record number");<a name="line.335"></a>
+<FONT color="green">336</FONT>                    } finally {<a name="line.336"></a>
+<FONT color="green">337</FONT>                            rwlock.readLock().unlock();<a name="line.337"></a>
+<FONT color="green">338</FONT>                    }<a name="line.338"></a>
+<FONT color="green">339</FONT>    <a name="line.339"></a>
+<FONT color="green">340</FONT>                    long pos = getRecPos(recNo);<a name="line.340"></a>
+<FONT color="green">341</FONT>                    try {<a name="line.341"></a>
+<FONT color="green">342</FONT>                            readerwriter.write(pos + flaglength, data);<a name="line.342"></a>
+<FONT color="green">343</FONT>                    } catch (IOException e) {<a name="line.343"></a>
+<FONT color="green">344</FONT>                            throw new RuntimeException(e);<a name="line.344"></a>
+<FONT color="green">345</FONT>                    }<a name="line.345"></a>
+<FONT color="green">346</FONT>            }<a name="line.346"></a>
+<FONT color="green">347</FONT>    <a name="line.347"></a>
+<FONT color="green">348</FONT>            /**<a name="line.348"></a>
+<FONT color="green">349</FONT>             * Method fills &lt;code&gt;valid&lt;/code&gt; and &lt;code&gt;deleted&lt;/code&gt; sets with values,<a name="line.349"></a>
+<FONT color="green">350</FONT>             * according data in database file.<a name="line.350"></a>
+<FONT color="green">351</FONT>             * <a name="line.351"></a>
+<FONT color="green">352</FONT>             * @throws IOException<a name="line.352"></a>
+<FONT color="green">353</FONT>             *          on file reading error<a name="line.353"></a>
+<FONT color="green">354</FONT>             */<a name="line.354"></a>
+<FONT color="green">355</FONT>            private void buildIndex() throws IOException {<a name="line.355"></a>
+<FONT color="green">356</FONT>                    rwlock.writeLock().lock();<a name="line.356"></a>
+<FONT color="green">357</FONT>                    try {<a name="line.357"></a>
+<FONT color="green">358</FONT>                            valid.clear();<a name="line.358"></a>
+<FONT color="green">359</FONT>                            deleted.clear();<a name="line.359"></a>
+<FONT color="green">360</FONT>                            for (long pos = header_offset, recNo = FIRST_RECNO; pos &lt; file.length(); pos += (record_length + flaglength), recNo++) {<a name="line.360"></a>
+<FONT color="green">361</FONT>                                    byte b = readerwriter.read(pos);<a name="line.361"></a>
+<FONT color="green">362</FONT>                                    if (b == validrecbyte) {<a name="line.362"></a>
+<FONT color="green">363</FONT>                                            valid.add(recNo);<a name="line.363"></a>
+<FONT color="green">364</FONT>                                    } else if (b == deletedrecbyte) {<a name="line.364"></a>
+<FONT color="green">365</FONT>                                            deleted.add(recNo);<a name="line.365"></a>
+<FONT color="green">366</FONT>                                    } else {<a name="line.366"></a>
+<FONT color="green">367</FONT>                                            throw new RuntimeException("flag expected but other found: " + b);<a name="line.367"></a>
+<FONT color="green">368</FONT>                                    }<a name="line.368"></a>
+<FONT color="green">369</FONT>                            }<a name="line.369"></a>
+<FONT color="green">370</FONT>                            recordCount = valid.size() + deleted.size();<a name="line.370"></a>
+<FONT color="green">371</FONT>                    } finally {<a name="line.371"></a>
+<FONT color="green">372</FONT>                            rwlock.writeLock().unlock();<a name="line.372"></a>
+<FONT color="green">373</FONT>                    }<a name="line.373"></a>
+<FONT color="green">374</FONT>    <a name="line.374"></a>
+<FONT color="green">375</FONT>            }<a name="line.375"></a>
+<FONT color="green">376</FONT>    <a name="line.376"></a>
+<FONT color="green">377</FONT>            /**<a name="line.377"></a>
+<FONT color="green">378</FONT>             * Method checks if record is accepted by filter criteria.<a name="line.378"></a>
+<FONT color="green">379</FONT>             * <a name="line.379"></a>
+<FONT color="green">380</FONT>             * @param dataArr<a name="line.380"></a>
+<FONT color="green">381</FONT>             *         record fields<a name="line.381"></a>
+<FONT color="green">382</FONT>             * @param criteriaArr<a name="line.382"></a>
+<FONT color="green">383</FONT>             *         filter criteria<a name="line.383"></a>
+<FONT color="green">384</FONT>             * @return &lt;code&gt;true&lt;/code&gt; if record is accepted, &lt;code&gt;false&lt;/code&gt; if<a name="line.384"></a>
+<FONT color="green">385</FONT>             *         record is not accepted<a name="line.385"></a>
+<FONT color="green">386</FONT>             */<a name="line.386"></a>
+<FONT color="green">387</FONT>            private boolean checkCriteria(String[] dataArr, String[] criteriaArr) {<a name="line.387"></a>
+<FONT color="green">388</FONT>                    try {<a name="line.388"></a>
+<FONT color="green">389</FONT>                            for (int i = 0; i &lt; FIELD_SEQUENCE.length; i++) {<a name="line.389"></a>
+<FONT color="green">390</FONT>                                    String data = dataArr[i];<a name="line.390"></a>
+<FONT color="green">391</FONT>                                    String criteria = criteriaArr[i];<a name="line.391"></a>
+<FONT color="green">392</FONT>                                    if (criteria == null || data == null)<a name="line.392"></a>
+<FONT color="green">393</FONT>                                            continue;<a name="line.393"></a>
+<FONT color="green">394</FONT>                                    if (!data.startsWith(criteria))<a name="line.394"></a>
+<FONT color="green">395</FONT>                                            return false;<a name="line.395"></a>
+<FONT color="green">396</FONT>                            }<a name="line.396"></a>
+<FONT color="green">397</FONT>                    } catch (RuntimeException e) {<a name="line.397"></a>
+<FONT color="green">398</FONT>                            return false;<a name="line.398"></a>
+<FONT color="green">399</FONT>                    }<a name="line.399"></a>
+<FONT color="green">400</FONT>                    return true;<a name="line.400"></a>
+<FONT color="green">401</FONT>            }<a name="line.401"></a>
+<FONT color="green">402</FONT>    <a name="line.402"></a>
+<FONT color="green">403</FONT>            /**<a name="line.403"></a>
+<FONT color="green">404</FONT>             * Validates locking descriptor for specified record.<a name="line.404"></a>
+<FONT color="green">405</FONT>             * <a name="line.405"></a>
+<FONT color="green">406</FONT>             * @param recNoRef<a name="line.406"></a>
+<FONT color="green">407</FONT>             *         "unique per record number" object<a name="line.407"></a>
+<FONT color="green">408</FONT>             * @param lockCookie<a name="line.408"></a>
+<FONT color="green">409</FONT>             *         locking descriptor<a name="line.409"></a>
+<FONT color="green">410</FONT>             * @throws SecurityException<a name="line.410"></a>
+<FONT color="green">411</FONT>             *          if locking descriptor is invalid<a name="line.411"></a>
+<FONT color="green">412</FONT>             */<a name="line.412"></a>
+<FONT color="green">413</FONT>            private void checkLockCookie(Long recNo, Object recNoMutex, long lockCookie)<a name="line.413"></a>
+<FONT color="green">414</FONT>                            throws SecurityException {<a name="line.414"></a>
+<FONT color="green">415</FONT>                    synchronized (recNoMutex) {<a name="line.415"></a>
+<FONT color="green">416</FONT>                            log.log(Level.SEVERE, "check lock: " + recNo + ", " + lockCookie);<a name="line.416"></a>
+<FONT color="green">417</FONT>                            Long lock = locks.get(recNo);<a name="line.417"></a>
+<FONT color="green">418</FONT>                            if (lock == null || lock.longValue() != lockCookie)<a name="line.418"></a>
+<FONT color="green">419</FONT>                                    throw new SecurityException("invalid cookie passed");<a name="line.419"></a>
+<FONT color="green">420</FONT>                    }<a name="line.420"></a>
+<FONT color="green">421</FONT>            }<a name="line.421"></a>
+<FONT color="green">422</FONT>    <a name="line.422"></a>
+<FONT color="green">423</FONT>            /**<a name="line.423"></a>
+<FONT color="green">424</FONT>             * Closes this random access file stream and releases any system resources<a name="line.424"></a>
+<FONT color="green">425</FONT>             * associated with the stream when garbage collection determines that there are<a name="line.425"></a>
+<FONT color="green">426</FONT>             * no more references to the object.<a name="line.426"></a>
+<FONT color="green">427</FONT>             */<a name="line.427"></a>
+<FONT color="green">428</FONT>            private void close() {<a name="line.428"></a>
+<FONT color="green">429</FONT>                    if (file != null)<a name="line.429"></a>
+<FONT color="green">430</FONT>                            try {<a name="line.430"></a>
+<FONT color="green">431</FONT>                                    file.close();<a name="line.431"></a>
+<FONT color="green">432</FONT>                                    file = null;<a name="line.432"></a>
+<FONT color="green">433</FONT>                            } catch (IOException e) {<a name="line.433"></a>
+<FONT color="green">434</FONT>                                    log.log(Level.SEVERE, "Error closing file", e);<a name="line.434"></a>
+<FONT color="green">435</FONT>                            }<a name="line.435"></a>
+<FONT color="green">436</FONT>            }<a name="line.436"></a>
+<FONT color="green">437</FONT>    <a name="line.437"></a>
+<FONT color="green">438</FONT>            /**<a name="line.438"></a>
+<FONT color="green">439</FONT>             * Returns unique object for record number. Unique object used to gain access<a name="line.439"></a>
+<FONT color="green">440</FONT>             * to the record index in sets: &lt;code&gt;valid, deleted&lt;/code&gt;. Also it provides<a name="line.440"></a>
+<FONT color="green">441</FONT>             * ability to lock and unlock records independently each from other.<a name="line.441"></a>
+<FONT color="green">442</FONT>             * <a name="line.442"></a>
+<FONT color="green">443</FONT>             * @param recNo<a name="line.443"></a>
+<FONT color="green">444</FONT>             *         record number<a name="line.444"></a>
+<FONT color="green">445</FONT>             * @return "unique per record number" object<a name="line.445"></a>
+<FONT color="green">446</FONT>             */<a name="line.446"></a>
+<FONT color="green">447</FONT>            private Object getMutexForRecNo(long recNo) {<a name="line.447"></a>
+<FONT color="green">448</FONT>                    Long number = numberCache.get(recNo);<a name="line.448"></a>
+<FONT color="green">449</FONT>                    if (number == null) {<a name="line.449"></a>
+<FONT color="green">450</FONT>                            number = new Long(recNo);<a name="line.450"></a>
+<FONT color="green">451</FONT>                            numberCache.add(number);<a name="line.451"></a>
+<FONT color="green">452</FONT>                    }<a name="line.452"></a>
+<FONT color="green">453</FONT>                    return number;<a name="line.453"></a>
+<FONT color="green">454</FONT>            }<a name="line.454"></a>
+<FONT color="green">455</FONT>    <a name="line.455"></a>
+<FONT color="green">456</FONT>            /**<a name="line.456"></a>
+<FONT color="green">457</FONT>             * Returns position of record in file.<a name="line.457"></a>
+<FONT color="green">458</FONT>             * <a name="line.458"></a>
+<FONT color="green">459</FONT>             * @param recNo<a name="line.459"></a>
+<FONT color="green">460</FONT>             *         record number<a name="line.460"></a>
+<FONT color="green">461</FONT>             * @return position of record in database file<a name="line.461"></a>
+<FONT color="green">462</FONT>             */<a name="line.462"></a>
+<FONT color="green">463</FONT>            private long getRecPos(long recNo) {<a name="line.463"></a>
+<FONT color="green">464</FONT>                    return header_offset + (recNo - FIRST_RECNO) * (record_length + flaglength);<a name="line.464"></a>
+<FONT color="green">465</FONT>            }<a name="line.465"></a>
+<FONT color="green">466</FONT>    <a name="line.466"></a>
+<FONT color="green">467</FONT>            /**<a name="line.467"></a>
+<FONT color="green">468</FONT>             * Helper class for reading and writing random access file that is database<a name="line.468"></a>
+<FONT color="green">469</FONT>             * file.<a name="line.469"></a>
+<FONT color="green">470</FONT>             */<a name="line.470"></a>
+<FONT color="green">471</FONT>            private class ReaderWriter {<a name="line.471"></a>
+<FONT color="green">472</FONT>    <a name="line.472"></a>
+<FONT color="green">473</FONT>                    /**<a name="line.473"></a>
+<FONT color="green">474</FONT>                     * Checks if existing header of file is valid<a name="line.474"></a>
+<FONT color="green">475</FONT>                     * <a name="line.475"></a>
+<FONT color="green">476</FONT>                     * @throws IOException<a name="line.476"></a>
+<FONT color="green">477</FONT>                     *          on file reading error or if header is not valid<a name="line.477"></a>
+<FONT color="green">478</FONT>                     */<a name="line.478"></a>
+<FONT color="green">479</FONT>                    public void checkheader() throws IOException {<a name="line.479"></a>
+<FONT color="green">480</FONT>                            if (file.length() &lt; header_offset) {<a name="line.480"></a>
+<FONT color="green">481</FONT>                                    throw new IOException("database file is too small to be valid");<a name="line.481"></a>
+<FONT color="green">482</FONT>                            }<a name="line.482"></a>
+<FONT color="green">483</FONT>                            synchronized (file) {<a name="line.483"></a>
+<FONT color="green">484</FONT>                                    file.seek(0);<a name="line.484"></a>
+<FONT color="green">485</FONT>                                    byte[] hbytes = new byte[mc_value.length];<a name="line.485"></a>
+<FONT color="green">486</FONT>                                    file.read(hbytes);<a name="line.486"></a>
+<FONT color="green">487</FONT>                                    if (!Arrays.equals(hbytes, mc_value))<a name="line.487"></a>
+<FONT color="green">488</FONT>                                            throw new IOException("wrong database file format");<a name="line.488"></a>
+<FONT color="green">489</FONT>                            }<a name="line.489"></a>
+<FONT color="green">490</FONT>                    }<a name="line.490"></a>
+<FONT color="green">491</FONT>    <a name="line.491"></a>
+<FONT color="green">492</FONT>                    /**<a name="line.492"></a>
+<FONT color="green">493</FONT>                     * Reads one byte in position &lt;code&gt;pos&lt;/code&gt; of random access file<a name="line.493"></a>
+<FONT color="green">494</FONT>                     * <a name="line.494"></a>
+<FONT color="green">495</FONT>                     * @param pos<a name="line.495"></a>
+<FONT color="green">496</FONT>                     *         position of byte<a name="line.496"></a>
+<FONT color="green">497</FONT>                     * @return byte method reads<a name="line.497"></a>
+<FONT color="green">498</FONT>                     * @throws IOException<a name="line.498"></a>
+<FONT color="green">499</FONT>                     *          on error during reading<a name="line.499"></a>
+<FONT color="green">500</FONT>                     */<a name="line.500"></a>
+<FONT color="green">501</FONT>                    public byte read(long pos) throws IOException {<a name="line.501"></a>
+<FONT color="green">502</FONT>                            byte[] b = new byte[1];<a name="line.502"></a>
+<FONT color="green">503</FONT>                            synchronized (file) {<a name="line.503"></a>
+<FONT color="green">504</FONT>                                    file.seek(pos);<a name="line.504"></a>
+<FONT color="green">505</FONT>                                    file.read(b);<a name="line.505"></a>
+<FONT color="green">506</FONT>                            }<a name="line.506"></a>
+<FONT color="green">507</FONT>                            return b[0];<a name="line.507"></a>
+<FONT color="green">508</FONT>                    }<a name="line.508"></a>
+<FONT color="green">509</FONT>    <a name="line.509"></a>
+<FONT color="green">510</FONT>                    /**<a name="line.510"></a>
+<FONT color="green">511</FONT>                     * Returns field values based on database record scheme as array of String<a name="line.511"></a>
+<FONT color="green">512</FONT>                     * <a name="line.512"></a>
+<FONT color="green">513</FONT>                     * @param pos<a name="line.513"></a>
+<FONT color="green">514</FONT>                     *         position of data in random access file<a name="line.514"></a>
+<FONT color="green">515</FONT>                     * @param fields<a name="line.515"></a>
+<FONT color="green">516</FONT>                     *         database record scheme<a name="line.516"></a>
+<FONT color="green">517</FONT>                     * @return array of String representing fields of record<a name="line.517"></a>
+<FONT color="green">518</FONT>                     * @throws IOException<a name="line.518"></a>
+<FONT color="green">519</FONT>                     *          on file reading error<a name="line.519"></a>
+<FONT color="green">520</FONT>                     */<a name="line.520"></a>
+<FONT color="green">521</FONT>                    public String[] readData(long pos) throws IOException {<a name="line.521"></a>
+<FONT color="green">522</FONT>                            String[] result = new String[FIELD_SEQUENCE.length];<a name="line.522"></a>
+<FONT color="green">523</FONT>                            synchronized (file) {<a name="line.523"></a>
+<FONT color="green">524</FONT>                                    file.seek(pos);<a name="line.524"></a>
+<FONT color="green">525</FONT>                                    for (int i = 0; i &lt; FIELD_LENGTH.length; i++) {<a name="line.525"></a>
+<FONT color="green">526</FONT>                                            byte[] fielddata = new byte[FIELD_LENGTH[i]];<a name="line.526"></a>
+<FONT color="green">527</FONT>                                            file.read(fielddata, 0, fielddata.length);<a name="line.527"></a>
+<FONT color="green">528</FONT>                                            result[i] = new String(fielddata, encoding).trim();<a name="line.528"></a>
+<FONT color="green">529</FONT>                                    }<a name="line.529"></a>
+<FONT color="green">530</FONT>                            }<a name="line.530"></a>
+<FONT color="green">531</FONT>                            return result;<a name="line.531"></a>
+<FONT color="green">532</FONT>                    }<a name="line.532"></a>
+<FONT color="green">533</FONT>    <a name="line.533"></a>
+<FONT color="green">534</FONT>                    /**<a name="line.534"></a>
+<FONT color="green">535</FONT>                     * Writes only one byte to a specified position &lt;code&gt;pos&lt;/code&gt; in the random<a name="line.535"></a>
+<FONT color="green">536</FONT>                     * access file<a name="line.536"></a>
+<FONT color="green">537</FONT>                     * <a name="line.537"></a>
+<FONT color="green">538</FONT>                     * @param pos<a name="line.538"></a>
+<FONT color="green">539</FONT>                     *         position in random access file<a name="line.539"></a>
+<FONT color="green">540</FONT>                     * @param b<a name="line.540"></a>
+<FONT color="green">541</FONT>                     *         one byte to write<a name="line.541"></a>
+<FONT color="green">542</FONT>                     * @throws IOException<a name="line.542"></a>
+<FONT color="green">543</FONT>                     *          on file writing error<a name="line.543"></a>
+<FONT color="green">544</FONT>                     */<a name="line.544"></a>
+<FONT color="green">545</FONT>                    public void write(long pos, byte b) throws IOException {<a name="line.545"></a>
+<FONT color="green">546</FONT>                            synchronized (file) {<a name="line.546"></a>
+<FONT color="green">547</FONT>                                    file.seek(pos);<a name="line.547"></a>
+<FONT color="green">548</FONT>                                    file.write(b);<a name="line.548"></a>
+<FONT color="green">549</FONT>                            }<a name="line.549"></a>
+<FONT color="green">550</FONT>                    }<a name="line.550"></a>
+<FONT color="green">551</FONT>    <a name="line.551"></a>
+<FONT color="green">552</FONT>                    /**<a name="line.552"></a>
+<FONT color="green">553</FONT>                     * Writes data to a specified position &lt;code&gt;pos&lt;/code&gt; in the random access<a name="line.553"></a>
+<FONT color="green">554</FONT>                     * file, according database record scheme.<a name="line.554"></a>
+<FONT color="green">555</FONT>                     * <a name="line.555"></a>
+<FONT color="green">556</FONT>                     * @param pos<a name="line.556"></a>
+<FONT color="green">557</FONT>                     *         position in a random access file<a name="line.557"></a>
+<FONT color="green">558</FONT>                     * @param data<a name="line.558"></a>
+<FONT color="green">559</FONT>                     *         array of String, representing fields of record<a name="line.559"></a>
+<FONT color="green">560</FONT>                     * @throws IOException<a name="line.560"></a>
+<FONT color="green">561</FONT>                     *          on file writing error<a name="line.561"></a>
+<FONT color="green">562</FONT>                     */<a name="line.562"></a>
+<FONT color="green">563</FONT>                    public void write(long pos, String[] data) throws IOException {<a name="line.563"></a>
+<FONT color="green">564</FONT>                            synchronized (file) {<a name="line.564"></a>
+<FONT color="green">565</FONT>                                    file.seek(pos);<a name="line.565"></a>
+<FONT color="green">566</FONT>                                    for (int i = 0; i &lt; FIELD_LENGTH.length; i++) {<a name="line.566"></a>
+<FONT color="green">567</FONT>                                            byte[] fielddata = new byte[FIELD_LENGTH[i]];<a name="line.567"></a>
+<FONT color="green">568</FONT>                                            byte[] outdata = data[i].getBytes(encoding);<a name="line.568"></a>
+<FONT color="green">569</FONT>                                            if (fielddata.length &gt; outdata.length)<a name="line.569"></a>
+<FONT color="green">570</FONT>                                                    Arrays.fill(fielddata, space_byte);<a name="line.570"></a>
+<FONT color="green">571</FONT>                                            System.arraycopy(outdata, 0, fielddata, 0, Math.min(fielddata.length,<a name="line.571"></a>
+<FONT color="green">572</FONT>                                                            outdata.length));<a name="line.572"></a>
+<FONT color="green">573</FONT>                                            file.write(fielddata, 0, fielddata.length);<a name="line.573"></a>
+<FONT color="green">574</FONT>                                    }<a name="line.574"></a>
+<FONT color="green">575</FONT>                            }<a name="line.575"></a>
+<FONT color="green">576</FONT>                    }<a name="line.576"></a>
+<FONT color="green">577</FONT>            }<a name="line.577"></a>
+<FONT color="green">578</FONT>    <a name="line.578"></a>
+<FONT color="green">579</FONT>    }<a name="line.579"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

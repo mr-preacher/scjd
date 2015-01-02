@@ -1,0 +1,64 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+                       DESIGN CHOICES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+
+This text file contains a listing of my design choices for the
+Java 2 Platform Developers Certification project. I segregated
+this listing into many sections:
+
+1. NETWORK PROTOCOL DESIGN CHOICES
+2. SERVER DESIGN CHOICES
+3. CLIENT DESIGN CHOICES
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+1. NETWORK PROTOCOL DESIGN CHOICES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+
+I choosed sockets instead of RMI, because it allowed me
+use the same interface for interaction with database via the network client and via the standalone client.
+
+The methods specified in the description of the interface DBAccess can not throw
+RemoteException or IOException, i.e Data class methods can not throw IOException at all.  At the same time RMI specification requires that methods of RMI-based class
+declare RemoteException.
+
+I could get around this problem by using a different interface with the proclamations of RemoteException, and create implementation classes that aggregate DBAccess object, but I thought that the the sockets more elegant, besides helping to understand networking better.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+2. SERVER DESIGN CHOICES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+
+I decided to implement a functionality of auto unlocking, because the client can lock entry and never unlock it. This can lead to the fact that the record remains locked until you restart the server. Functionality of automatic unlocking ensures that the record will be unlocked, after a certain period of time and the others clients could lock it also.
+
+I used the method java.lang.System.nanoTime() to create a unique locking cookie,
+because the value returned by this method depends on the moment locking called and can be unique for each of the locks. This ensures
+independent lock of multiple records by multiple users with unique values for locking cookie.
+
+I decided to show logging information in the server window to allow user view information about the operations without the assistance of the command console. It's useful to see log in the windows to scroll log, clear log information at any moment.
+
+I decided to allow user change server settings without restarting the server, so the user would be convenient to change the application settings without restarting the server from the command line.
+
+I decided to implement all the interface functions of the database, because it helped me to get full advantage of the knowledge that I reached commiting the task.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+3. CLIENT DESIGN CHOICES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%
+
+I decided to use the menus (main and context) rather than buttons, because it allowed me to reduce the area dedicated to the controls and to assign this area for table content.
+
+I decided to allow user to change settings without restarting the client (network or standalone), so the user would be convenient to change the application settings without restarting the client from the command line.
+
+I decided to popup the confirmation dialog for the user's operations to add interactivity to the application. In addition, sections of code that corresponding invocations of confirmation dialogs easier to find in the code.
+
+I decided to create my own text edit controls to verify user input, because standard edit control JFormattedTextField is not meet to the requirements of the task.
+
+I decided to use dialogs for user's operations instead of the panels, because it helped me to reduce the area dedicated to the controls and give this area for table content. Furthermore dialogs improve the integrity of the interaction of application  with the user, because they add interactivity.

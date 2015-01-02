@@ -1,0 +1,819 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    package suncertify.gui;<a name="line.1"></a>
+<FONT color="green">002</FONT>    <a name="line.2"></a>
+<FONT color="green">003</FONT>    import java.awt.BorderLayout;<a name="line.3"></a>
+<FONT color="green">004</FONT>    import java.awt.Dimension;<a name="line.4"></a>
+<FONT color="green">005</FONT>    import java.awt.event.ActionEvent;<a name="line.5"></a>
+<FONT color="green">006</FONT>    import java.awt.event.ActionListener;<a name="line.6"></a>
+<FONT color="green">007</FONT>    import java.awt.event.InputEvent;<a name="line.7"></a>
+<FONT color="green">008</FONT>    import java.awt.event.KeyEvent;<a name="line.8"></a>
+<FONT color="green">009</FONT>    import java.awt.event.WindowAdapter;<a name="line.9"></a>
+<FONT color="green">010</FONT>    import java.awt.event.WindowEvent;<a name="line.10"></a>
+<FONT color="green">011</FONT>    import java.util.logging.Level;<a name="line.11"></a>
+<FONT color="green">012</FONT>    import java.util.logging.Logger;<a name="line.12"></a>
+<FONT color="green">013</FONT>    import javax.swing.BorderFactory;<a name="line.13"></a>
+<FONT color="green">014</FONT>    import javax.swing.JLabel;<a name="line.14"></a>
+<FONT color="green">015</FONT>    import javax.swing.JMenu;<a name="line.15"></a>
+<FONT color="green">016</FONT>    import javax.swing.JMenuBar;<a name="line.16"></a>
+<FONT color="green">017</FONT>    import javax.swing.JMenuItem;<a name="line.17"></a>
+<FONT color="green">018</FONT>    import javax.swing.JOptionPane;<a name="line.18"></a>
+<FONT color="green">019</FONT>    import javax.swing.JPanel;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import javax.swing.JPopupMenu;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import javax.swing.JScrollPane;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import javax.swing.JSeparator;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import javax.swing.JTable;<a name="line.23"></a>
+<FONT color="green">024</FONT>    import javax.swing.KeyStroke;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import javax.swing.ListSelectionModel;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import javax.swing.WindowConstants;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import javax.swing.table.TableModel;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import suncertify.Application;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import suncertify.ApplicationWindow;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import suncertify.Application.ApplicationType;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import suncertify.db.DBAccess;<a name="line.31"></a>
+<FONT color="green">032</FONT>    import suncertify.gui.OperationDialogPanel.OperationType;<a name="line.32"></a>
+<FONT color="green">033</FONT>    <a name="line.33"></a>
+<FONT color="green">034</FONT>    /**<a name="line.34"></a>
+<FONT color="green">035</FONT>     * Class &lt;code&gt;ClientWindow&lt;/code&gt; extends {@link ApplicationWindow}. This is a<a name="line.35"></a>
+<FONT color="green">036</FONT>     * window that appears when application starts in the client mode (network<a name="line.36"></a>
+<FONT color="green">037</FONT>     * client or standalone client).<a name="line.37"></a>
+<FONT color="green">038</FONT>     * <a name="line.38"></a>
+<FONT color="green">039</FONT>     * @author Petr Shilkin<a name="line.39"></a>
+<FONT color="green">040</FONT>     * @version 1.0<a name="line.40"></a>
+<FONT color="green">041</FONT>     */<a name="line.41"></a>
+<FONT color="green">042</FONT>    public class ClientWindow extends ApplicationWindow {<a name="line.42"></a>
+<FONT color="green">043</FONT>            /**<a name="line.43"></a>
+<FONT color="green">044</FONT>             * A version number for this class so that serialization can occur without<a name="line.44"></a>
+<FONT color="green">045</FONT>             * worrying about the underlying class changing between serialization and<a name="line.45"></a>
+<FONT color="green">046</FONT>             * deserialization.<a name="line.46"></a>
+<FONT color="green">047</FONT>             */<a name="line.47"></a>
+<FONT color="green">048</FONT>            private static final long serialVersionUID = 5165L;<a name="line.48"></a>
+<FONT color="green">049</FONT>            /**<a name="line.49"></a>
+<FONT color="green">050</FONT>             * Logger for debugging issues<a name="line.50"></a>
+<FONT color="green">051</FONT>             */<a name="line.51"></a>
+<FONT color="green">052</FONT>            private transient Logger log = Logger.getLogger(this.getClass().getPackage()<a name="line.52"></a>
+<FONT color="green">053</FONT>                            .getName());<a name="line.53"></a>
+<FONT color="green">054</FONT>            /**<a name="line.54"></a>
+<FONT color="green">055</FONT>             * options menu item<a name="line.55"></a>
+<FONT color="green">056</FONT>             */<a name="line.56"></a>
+<FONT color="green">057</FONT>            private JMenuItem optionsMI;<a name="line.57"></a>
+<FONT color="green">058</FONT>            /**<a name="line.58"></a>
+<FONT color="green">059</FONT>             * about menu item<a name="line.59"></a>
+<FONT color="green">060</FONT>             */<a name="line.60"></a>
+<FONT color="green">061</FONT>            private JMenuItem aboutMI;<a name="line.61"></a>
+<FONT color="green">062</FONT>            /**<a name="line.62"></a>
+<FONT color="green">063</FONT>             * action menu<a name="line.63"></a>
+<FONT color="green">064</FONT>             */<a name="line.64"></a>
+<FONT color="green">065</FONT>            private JMenu actionMenu;<a name="line.65"></a>
+<FONT color="green">066</FONT>            /**<a name="line.66"></a>
+<FONT color="green">067</FONT>             * book menu item<a name="line.67"></a>
+<FONT color="green">068</FONT>             */<a name="line.68"></a>
+<FONT color="green">069</FONT>            private JMenuItem bookMI;<a name="line.69"></a>
+<FONT color="green">070</FONT>            /**<a name="line.70"></a>
+<FONT color="green">071</FONT>             * create menu item<a name="line.71"></a>
+<FONT color="green">072</FONT>             */<a name="line.72"></a>
+<FONT color="green">073</FONT>            private JMenuItem createMI;<a name="line.73"></a>
+<FONT color="green">074</FONT>            /**<a name="line.74"></a>
+<FONT color="green">075</FONT>             * delete menu item<a name="line.75"></a>
+<FONT color="green">076</FONT>             */<a name="line.76"></a>
+<FONT color="green">077</FONT>            private JMenuItem deleteMI;<a name="line.77"></a>
+<FONT color="green">078</FONT>            /**<a name="line.78"></a>
+<FONT color="green">079</FONT>             * edit menu item<a name="line.79"></a>
+<FONT color="green">080</FONT>             */<a name="line.80"></a>
+<FONT color="green">081</FONT>            private JMenuItem editMI;<a name="line.81"></a>
+<FONT color="green">082</FONT>            /**<a name="line.82"></a>
+<FONT color="green">083</FONT>             * exit menu item<a name="line.83"></a>
+<FONT color="green">084</FONT>             */<a name="line.84"></a>
+<FONT color="green">085</FONT>            private JMenuItem exitMI;<a name="line.85"></a>
+<FONT color="green">086</FONT>            /**<a name="line.86"></a>
+<FONT color="green">087</FONT>             * find menu item<a name="line.87"></a>
+<FONT color="green">088</FONT>             */<a name="line.88"></a>
+<FONT color="green">089</FONT>            private JMenuItem findMI;<a name="line.89"></a>
+<FONT color="green">090</FONT>            /**<a name="line.90"></a>
+<FONT color="green">091</FONT>             * file menu<a name="line.91"></a>
+<FONT color="green">092</FONT>             */<a name="line.92"></a>
+<FONT color="green">093</FONT>            private JMenu fileMenu;<a name="line.93"></a>
+<FONT color="green">094</FONT>            /**<a name="line.94"></a>
+<FONT color="green">095</FONT>             * help menu item<a name="line.95"></a>
+<FONT color="green">096</FONT>             */<a name="line.96"></a>
+<FONT color="green">097</FONT>            private JMenuItem helpMI;<a name="line.97"></a>
+<FONT color="green">098</FONT>            /**<a name="line.98"></a>
+<FONT color="green">099</FONT>             * help menu<a name="line.99"></a>
+<FONT color="green">100</FONT>             */<a name="line.100"></a>
+<FONT color="green">101</FONT>            private JMenu helpMenu;<a name="line.101"></a>
+<FONT color="green">102</FONT>            /**<a name="line.102"></a>
+<FONT color="green">103</FONT>             * menu separator<a name="line.103"></a>
+<FONT color="green">104</FONT>             */<a name="line.104"></a>
+<FONT color="green">105</FONT>            private JSeparator fileMenuSeparator;<a name="line.105"></a>
+<FONT color="green">106</FONT>            /**<a name="line.106"></a>
+<FONT color="green">107</FONT>             * main menu bar<a name="line.107"></a>
+<FONT color="green">108</FONT>             */<a name="line.108"></a>
+<FONT color="green">109</FONT>            private JMenuBar mainMenuBar;<a name="line.109"></a>
+<FONT color="green">110</FONT>            /**<a name="line.110"></a>
+<FONT color="green">111</FONT>             * table where records are shown<a name="line.111"></a>
+<FONT color="green">112</FONT>             */<a name="line.112"></a>
+<FONT color="green">113</FONT>            private JTable mainTable;<a name="line.113"></a>
+<FONT color="green">114</FONT>            /**<a name="line.114"></a>
+<FONT color="green">115</FONT>             * popup book menu item<a name="line.115"></a>
+<FONT color="green">116</FONT>             */<a name="line.116"></a>
+<FONT color="green">117</FONT>            private JMenuItem popBookMI;<a name="line.117"></a>
+<FONT color="green">118</FONT>            /**<a name="line.118"></a>
+<FONT color="green">119</FONT>             * popup create menu item<a name="line.119"></a>
+<FONT color="green">120</FONT>             */<a name="line.120"></a>
+<FONT color="green">121</FONT>            private JMenuItem popCreateMI;<a name="line.121"></a>
+<FONT color="green">122</FONT>            /**<a name="line.122"></a>
+<FONT color="green">123</FONT>             * popup delete menu item<a name="line.123"></a>
+<FONT color="green">124</FONT>             */<a name="line.124"></a>
+<FONT color="green">125</FONT>            private JMenuItem popDeleteMI;<a name="line.125"></a>
+<FONT color="green">126</FONT>            /**<a name="line.126"></a>
+<FONT color="green">127</FONT>             * popup edit menu item<a name="line.127"></a>
+<FONT color="green">128</FONT>             */<a name="line.128"></a>
+<FONT color="green">129</FONT>            private JMenuItem popEditMI;<a name="line.129"></a>
+<FONT color="green">130</FONT>            /**<a name="line.130"></a>
+<FONT color="green">131</FONT>             * popup find menu item<a name="line.131"></a>
+<FONT color="green">132</FONT>             */<a name="line.132"></a>
+<FONT color="green">133</FONT>            private JMenuItem popFindMI;<a name="line.133"></a>
+<FONT color="green">134</FONT>            /**<a name="line.134"></a>
+<FONT color="green">135</FONT>             * popup menu<a name="line.135"></a>
+<FONT color="green">136</FONT>             */<a name="line.136"></a>
+<FONT color="green">137</FONT>            private JPopupMenu popupMenu;<a name="line.137"></a>
+<FONT color="green">138</FONT>            /**<a name="line.138"></a>
+<FONT color="green">139</FONT>             * status label<a name="line.139"></a>
+<FONT color="green">140</FONT>             */<a name="line.140"></a>
+<FONT color="green">141</FONT>            private JLabel statusLabel;<a name="line.141"></a>
+<FONT color="green">142</FONT>            /**<a name="line.142"></a>
+<FONT color="green">143</FONT>             * status panel<a name="line.143"></a>
+<FONT color="green">144</FONT>             */<a name="line.144"></a>
+<FONT color="green">145</FONT>            private JPanel statusPane;<a name="line.145"></a>
+<FONT color="green">146</FONT>            /**<a name="line.146"></a>
+<FONT color="green">147</FONT>             * scroll panel<a name="line.147"></a>
+<FONT color="green">148</FONT>             */<a name="line.148"></a>
+<FONT color="green">149</FONT>            private JScrollPane tableScrollPane;<a name="line.149"></a>
+<FONT color="green">150</FONT>    <a name="line.150"></a>
+<FONT color="green">151</FONT>            /**<a name="line.151"></a>
+<FONT color="green">152</FONT>             * Creates new &lt;code&gt;ClientWindow&lt;code&gt; object.<a name="line.152"></a>
+<FONT color="green">153</FONT>             * <a name="line.153"></a>
+<FONT color="green">154</FONT>             * @param application<a name="line.154"></a>
+<FONT color="green">155</FONT>             *         reference to the application object<a name="line.155"></a>
+<FONT color="green">156</FONT>             */<a name="line.156"></a>
+<FONT color="green">157</FONT>            public ClientWindow(Application application) {<a name="line.157"></a>
+<FONT color="green">158</FONT>                    super(application);<a name="line.158"></a>
+<FONT color="green">159</FONT>                    initComponents();<a name="line.159"></a>
+<FONT color="green">160</FONT>                    initOpenListener();<a name="line.160"></a>
+<FONT color="green">161</FONT>            }<a name="line.161"></a>
+<FONT color="green">162</FONT>    <a name="line.162"></a>
+<FONT color="green">163</FONT>            /**<a name="line.163"></a>
+<FONT color="green">164</FONT>             * {@inheritDoc} &lt;br&gt;<a name="line.164"></a>
+<FONT color="green">165</FONT>             * Updates window content when application settings are changed.<a name="line.165"></a>
+<FONT color="green">166</FONT>             */<a name="line.166"></a>
+<FONT color="green">167</FONT>            public void updateWindowContent() {<a name="line.167"></a>
+<FONT color="green">168</FONT>                    String dbURL = application.getDBUrl();<a name="line.168"></a>
+<FONT color="green">169</FONT>                    statusLabel.setText(dbURL == null ? "disconnected from database"<a name="line.169"></a>
+<FONT color="green">170</FONT>                                    : "connected to database on [" + dbURL + "]");<a name="line.170"></a>
+<FONT color="green">171</FONT>                    initTableFill();<a name="line.171"></a>
+<FONT color="green">172</FONT>            }<a name="line.172"></a>
+<FONT color="green">173</FONT>    <a name="line.173"></a>
+<FONT color="green">174</FONT>            /**<a name="line.174"></a>
+<FONT color="green">175</FONT>             * Initializes listener to display option dialog on startup<a name="line.175"></a>
+<FONT color="green">176</FONT>             */<a name="line.176"></a>
+<FONT color="green">177</FONT>            private void initOpenListener() {<a name="line.177"></a>
+<FONT color="green">178</FONT>                    this.addWindowListener(new WindowAdapter() {<a name="line.178"></a>
+<FONT color="green">179</FONT>                            /**<a name="line.179"></a>
+<FONT color="green">180</FONT>                             * Invokes option menu handler to show dialog with options i.e. settings<a name="line.180"></a>
+<FONT color="green">181</FONT>                             */<a name="line.181"></a>
+<FONT color="green">182</FONT>                            public void windowOpened(WindowEvent e) {<a name="line.182"></a>
+<FONT color="green">183</FONT>                                    updateWindowContent();<a name="line.183"></a>
+<FONT color="green">184</FONT>                                    optionsMIActionPerformed();<a name="line.184"></a>
+<FONT color="green">185</FONT>                            }<a name="line.185"></a>
+<FONT color="green">186</FONT>                    });<a name="line.186"></a>
+<FONT color="green">187</FONT>            }<a name="line.187"></a>
+<FONT color="green">188</FONT>    <a name="line.188"></a>
+<FONT color="green">189</FONT>            /**<a name="line.189"></a>
+<FONT color="green">190</FONT>             * Initializes frame components.<a name="line.190"></a>
+<FONT color="green">191</FONT>             */<a name="line.191"></a>
+<FONT color="green">192</FONT>            private void initComponents() {<a name="line.192"></a>
+<FONT color="green">193</FONT>    <a name="line.193"></a>
+<FONT color="green">194</FONT>                    popupMenu = new JPopupMenu();<a name="line.194"></a>
+<FONT color="green">195</FONT>                    popBookMI = new JMenuItem();<a name="line.195"></a>
+<FONT color="green">196</FONT>                    popCreateMI = new JMenuItem();<a name="line.196"></a>
+<FONT color="green">197</FONT>                    popEditMI = new JMenuItem();<a name="line.197"></a>
+<FONT color="green">198</FONT>                    popDeleteMI = new JMenuItem();<a name="line.198"></a>
+<FONT color="green">199</FONT>                    popFindMI = new JMenuItem();<a name="line.199"></a>
+<FONT color="green">200</FONT>                    tableScrollPane = new JScrollPane();<a name="line.200"></a>
+<FONT color="green">201</FONT>                    mainTable = new JTable();<a name="line.201"></a>
+<FONT color="green">202</FONT>                    statusPane = new JPanel();<a name="line.202"></a>
+<FONT color="green">203</FONT>                    statusLabel = new JLabel();<a name="line.203"></a>
+<FONT color="green">204</FONT>                    mainMenuBar = new JMenuBar();<a name="line.204"></a>
+<FONT color="green">205</FONT>                    fileMenu = new JMenu();<a name="line.205"></a>
+<FONT color="green">206</FONT>                    fileMenuSeparator = new JSeparator();<a name="line.206"></a>
+<FONT color="green">207</FONT>                    exitMI = new JMenuItem();<a name="line.207"></a>
+<FONT color="green">208</FONT>                    actionMenu = new JMenu();<a name="line.208"></a>
+<FONT color="green">209</FONT>                    bookMI = new JMenuItem();<a name="line.209"></a>
+<FONT color="green">210</FONT>                    createMI = new JMenuItem();<a name="line.210"></a>
+<FONT color="green">211</FONT>                    editMI = new JMenuItem();<a name="line.211"></a>
+<FONT color="green">212</FONT>                    deleteMI = new JMenuItem();<a name="line.212"></a>
+<FONT color="green">213</FONT>                    findMI = new JMenuItem();<a name="line.213"></a>
+<FONT color="green">214</FONT>                    helpMenu = new JMenu();<a name="line.214"></a>
+<FONT color="green">215</FONT>                    helpMI = new JMenuItem();<a name="line.215"></a>
+<FONT color="green">216</FONT>                    aboutMI = new JMenuItem();<a name="line.216"></a>
+<FONT color="green">217</FONT>                    optionsMI = new JMenuItem();<a name="line.217"></a>
+<FONT color="green">218</FONT>                    popBookMI.setText("Book");<a name="line.218"></a>
+<FONT color="green">219</FONT>                    popupMenu.add(popBookMI);<a name="line.219"></a>
+<FONT color="green">220</FONT>                    popCreateMI.setText("Create");<a name="line.220"></a>
+<FONT color="green">221</FONT>                    popupMenu.add(popCreateMI);<a name="line.221"></a>
+<FONT color="green">222</FONT>                    popEditMI.setText("Edit");<a name="line.222"></a>
+<FONT color="green">223</FONT>                    popupMenu.add(popEditMI);<a name="line.223"></a>
+<FONT color="green">224</FONT>                    popDeleteMI.setText("Delete");<a name="line.224"></a>
+<FONT color="green">225</FONT>                    popupMenu.add(popDeleteMI);<a name="line.225"></a>
+<FONT color="green">226</FONT>                    popFindMI.setText("Find");<a name="line.226"></a>
+<FONT color="green">227</FONT>                    popupMenu.add(popFindMI);<a name="line.227"></a>
+<FONT color="green">228</FONT>                    setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);<a name="line.228"></a>
+<FONT color="green">229</FONT>                    mainTable.setModel(new RecordTableModel());<a name="line.229"></a>
+<FONT color="green">230</FONT>                    mainTable.setComponentPopupMenu(popupMenu);<a name="line.230"></a>
+<FONT color="green">231</FONT>                    mainTable.setFillsViewportHeight(true);<a name="line.231"></a>
+<FONT color="green">232</FONT>                    mainTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);<a name="line.232"></a>
+<FONT color="green">233</FONT>                    mainTable.setRowSelectionAllowed(true);<a name="line.233"></a>
+<FONT color="green">234</FONT>                    tableScrollPane.setViewportView(mainTable);<a name="line.234"></a>
+<FONT color="green">235</FONT>                    getContentPane().add(tableScrollPane, BorderLayout.CENTER);<a name="line.235"></a>
+<FONT color="green">236</FONT>                    statusPane.setPreferredSize(new Dimension(400, 16));<a name="line.236"></a>
+<FONT color="green">237</FONT>                    statusPane.setLayout(new BorderLayout());<a name="line.237"></a>
+<FONT color="green">238</FONT>                    statusLabel.setText("");<a name="line.238"></a>
+<FONT color="green">239</FONT>                    statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 7, 0, 0));<a name="line.239"></a>
+<FONT color="green">240</FONT>                    statusPane.add(statusLabel, BorderLayout.CENTER);<a name="line.240"></a>
+<FONT color="green">241</FONT>                    getContentPane().add(statusPane, BorderLayout.SOUTH);<a name="line.241"></a>
+<FONT color="green">242</FONT>                    fileMenu.setText("File");<a name="line.242"></a>
+<FONT color="green">243</FONT>                    optionsMI.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,<a name="line.243"></a>
+<FONT color="green">244</FONT>                                    InputEvent.CTRL_MASK));<a name="line.244"></a>
+<FONT color="green">245</FONT>                    optionsMI.setText("Options...");<a name="line.245"></a>
+<FONT color="green">246</FONT>                    optionsMI.addActionListener(new ActionListener() {<a name="line.246"></a>
+<FONT color="green">247</FONT>                            public void actionPerformed(ActionEvent evt) {<a name="line.247"></a>
+<FONT color="green">248</FONT>                                    optionsMIActionPerformed();<a name="line.248"></a>
+<FONT color="green">249</FONT>                            }<a name="line.249"></a>
+<FONT color="green">250</FONT>                    });<a name="line.250"></a>
+<FONT color="green">251</FONT>                    fileMenu.add(optionsMI);<a name="line.251"></a>
+<FONT color="green">252</FONT>                    fileMenu.add(fileMenuSeparator);<a name="line.252"></a>
+<FONT color="green">253</FONT>                    exitMI.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4,<a name="line.253"></a>
+<FONT color="green">254</FONT>                                    InputEvent.ALT_MASK));<a name="line.254"></a>
+<FONT color="green">255</FONT>                    exitMI.setText("Exit");<a name="line.255"></a>
+<FONT color="green">256</FONT>                    exitMI.addActionListener(new ActionListener() {<a name="line.256"></a>
+<FONT color="green">257</FONT>                            public void actionPerformed(ActionEvent evt) {<a name="line.257"></a>
+<FONT color="green">258</FONT>                                    exitMIActionPerformed();<a name="line.258"></a>
+<FONT color="green">259</FONT>                            }<a name="line.259"></a>
+<FONT color="green">260</FONT>                    });<a name="line.260"></a>
+<FONT color="green">261</FONT>                    fileMenu.add(exitMI);<a name="line.261"></a>
+<FONT color="green">262</FONT>                    mainMenuBar.add(fileMenu);<a name="line.262"></a>
+<FONT color="green">263</FONT>                    actionMenu.setText("Action");<a name="line.263"></a>
+<FONT color="green">264</FONT>                    bookMI.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B,<a name="line.264"></a>
+<FONT color="green">265</FONT>                                    InputEvent.CTRL_MASK));<a name="line.265"></a>
+<FONT color="green">266</FONT>                    bookMI.setText("Book/Unbook");<a name="line.266"></a>
+<FONT color="green">267</FONT>                    actionMenu.add(bookMI);<a name="line.267"></a>
+<FONT color="green">268</FONT>                    createMI.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,<a name="line.268"></a>
+<FONT color="green">269</FONT>                                    InputEvent.ALT_MASK | InputEvent.CTRL_MASK));<a name="line.269"></a>
+<FONT color="green">270</FONT>                    createMI.setText("Create");<a name="line.270"></a>
+<FONT color="green">271</FONT>                    actionMenu.add(createMI);<a name="line.271"></a>
+<FONT color="green">272</FONT>                    editMI.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E,<a name="line.272"></a>
+<FONT color="green">273</FONT>                                    InputEvent.CTRL_MASK));<a name="line.273"></a>
+<FONT color="green">274</FONT>                    editMI.setText("Edit");<a name="line.274"></a>
+<FONT color="green">275</FONT>                    actionMenu.add(editMI);<a name="line.275"></a>
+<FONT color="green">276</FONT>                    deleteMI.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D,<a name="line.276"></a>
+<FONT color="green">277</FONT>                                    InputEvent.CTRL_MASK));<a name="line.277"></a>
+<FONT color="green">278</FONT>                    deleteMI.setText("Delete");<a name="line.278"></a>
+<FONT color="green">279</FONT>                    actionMenu.add(deleteMI);<a name="line.279"></a>
+<FONT color="green">280</FONT>                    findMI.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F,<a name="line.280"></a>
+<FONT color="green">281</FONT>                                    InputEvent.CTRL_MASK));<a name="line.281"></a>
+<FONT color="green">282</FONT>                    findMI.setText("Find");<a name="line.282"></a>
+<FONT color="green">283</FONT>                    actionMenu.add(findMI);<a name="line.283"></a>
+<FONT color="green">284</FONT>                    mainMenuBar.add(actionMenu);<a name="line.284"></a>
+<FONT color="green">285</FONT>                    helpMenu.setText("Help");<a name="line.285"></a>
+<FONT color="green">286</FONT>                    helpMI.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));<a name="line.286"></a>
+<FONT color="green">287</FONT>                    helpMI.setText("Help");<a name="line.287"></a>
+<FONT color="green">288</FONT>                    helpMI.addActionListener(new ActionListener() {<a name="line.288"></a>
+<FONT color="green">289</FONT>                            public void actionPerformed(ActionEvent evt) {<a name="line.289"></a>
+<FONT color="green">290</FONT>                                    helpMIActionPerformed();<a name="line.290"></a>
+<FONT color="green">291</FONT>                            }<a name="line.291"></a>
+<FONT color="green">292</FONT>                    });<a name="line.292"></a>
+<FONT color="green">293</FONT>                    helpMenu.add(helpMI);<a name="line.293"></a>
+<FONT color="green">294</FONT>                    aboutMI.setText("About");<a name="line.294"></a>
+<FONT color="green">295</FONT>                    aboutMI.addActionListener(new ActionListener() {<a name="line.295"></a>
+<FONT color="green">296</FONT>                            public void actionPerformed(ActionEvent evt) {<a name="line.296"></a>
+<FONT color="green">297</FONT>                                    aboutMIActionPerformed();<a name="line.297"></a>
+<FONT color="green">298</FONT>                            }<a name="line.298"></a>
+<FONT color="green">299</FONT>                    });<a name="line.299"></a>
+<FONT color="green">300</FONT>                    helpMenu.add(aboutMI);<a name="line.300"></a>
+<FONT color="green">301</FONT>                    mainMenuBar.add(helpMenu);<a name="line.301"></a>
+<FONT color="green">302</FONT>                    setJMenuBar(mainMenuBar);<a name="line.302"></a>
+<FONT color="green">303</FONT>                    pack();<a name="line.303"></a>
+<FONT color="green">304</FONT>                    setupMenuActionListeners();<a name="line.304"></a>
+<FONT color="green">305</FONT>            }<a name="line.305"></a>
+<FONT color="green">306</FONT>    <a name="line.306"></a>
+<FONT color="green">307</FONT>            /**<a name="line.307"></a>
+<FONT color="green">308</FONT>             * Fills table with records.<a name="line.308"></a>
+<FONT color="green">309</FONT>             */<a name="line.309"></a>
+<FONT color="green">310</FONT>            private void initTableFill() {<a name="line.310"></a>
+<FONT color="green">311</FONT>                    TableModel model = null;<a name="line.311"></a>
+<FONT color="green">312</FONT>                    try {<a name="line.312"></a>
+<FONT color="green">313</FONT>                            model = this.getRecords();<a name="line.313"></a>
+<FONT color="green">314</FONT>                    } catch (GuiException e) {<a name="line.314"></a>
+<FONT color="green">315</FONT>                            model = new RecordTableModel();<a name="line.315"></a>
+<FONT color="green">316</FONT>                    } finally {<a name="line.316"></a>
+<FONT color="green">317</FONT>                            this.mainTable.setModel(model);<a name="line.317"></a>
+<FONT color="green">318</FONT>                            updateRowSelection(0);<a name="line.318"></a>
+<FONT color="green">319</FONT>                    }<a name="line.319"></a>
+<FONT color="green">320</FONT>            }<a name="line.320"></a>
+<FONT color="green">321</FONT>    <a name="line.321"></a>
+<FONT color="green">322</FONT>            /**<a name="line.322"></a>
+<FONT color="green">323</FONT>             * Initializes action listeners for menu items.&lt;br&gt;<a name="line.323"></a>
+<FONT color="green">324</FONT>             * Menu items need action listeners to work properly.<a name="line.324"></a>
+<FONT color="green">325</FONT>             */<a name="line.325"></a>
+<FONT color="green">326</FONT>            private void setupMenuActionListeners() {<a name="line.326"></a>
+<FONT color="green">327</FONT>                    BookUnbookActionListener bal = new BookUnbookActionListener();<a name="line.327"></a>
+<FONT color="green">328</FONT>                    bookMI.addActionListener(bal);<a name="line.328"></a>
+<FONT color="green">329</FONT>                    popBookMI.addActionListener(bal);<a name="line.329"></a>
+<FONT color="green">330</FONT>                    CreateActionListener cal = new CreateActionListener();<a name="line.330"></a>
+<FONT color="green">331</FONT>                    createMI.addActionListener(cal);<a name="line.331"></a>
+<FONT color="green">332</FONT>                    popCreateMI.addActionListener(cal);<a name="line.332"></a>
+<FONT color="green">333</FONT>                    EditActionListener eal = new EditActionListener();<a name="line.333"></a>
+<FONT color="green">334</FONT>                    editMI.addActionListener(eal);<a name="line.334"></a>
+<FONT color="green">335</FONT>                    popEditMI.addActionListener(eal);<a name="line.335"></a>
+<FONT color="green">336</FONT>                    DeleteActionListener dal = new DeleteActionListener();<a name="line.336"></a>
+<FONT color="green">337</FONT>                    deleteMI.addActionListener(dal);<a name="line.337"></a>
+<FONT color="green">338</FONT>                    popDeleteMI.addActionListener(dal);<a name="line.338"></a>
+<FONT color="green">339</FONT>                    FindActionListener fal = new FindActionListener();<a name="line.339"></a>
+<FONT color="green">340</FONT>                    findMI.addActionListener(fal);<a name="line.340"></a>
+<FONT color="green">341</FONT>                    popFindMI.addActionListener(fal);<a name="line.341"></a>
+<FONT color="green">342</FONT>            }<a name="line.342"></a>
+<FONT color="green">343</FONT>    <a name="line.343"></a>
+<FONT color="green">344</FONT>            /**<a name="line.344"></a>
+<FONT color="green">345</FONT>             * Shows options dialog.&lt;br&gt;<a name="line.345"></a>
+<FONT color="green">346</FONT>             * User can change options while application runs.<a name="line.346"></a>
+<FONT color="green">347</FONT>             */<a name="line.347"></a>
+<FONT color="green">348</FONT>            private void optionsMIActionPerformed() {<a name="line.348"></a>
+<FONT color="green">349</FONT>                    if (application.showOptionsDialog()) {<a name="line.349"></a>
+<FONT color="green">350</FONT>                            application.cleanUp();<a name="line.350"></a>
+<FONT color="green">351</FONT>                            application.applyOptions();<a name="line.351"></a>
+<FONT color="green">352</FONT>                    }<a name="line.352"></a>
+<FONT color="green">353</FONT>            }<a name="line.353"></a>
+<FONT color="green">354</FONT>    <a name="line.354"></a>
+<FONT color="green">355</FONT>            /**<a name="line.355"></a>
+<FONT color="green">356</FONT>             * Closes application.<a name="line.356"></a>
+<FONT color="green">357</FONT>             */<a name="line.357"></a>
+<FONT color="green">358</FONT>            private void exitMIActionPerformed() {<a name="line.358"></a>
+<FONT color="green">359</FONT>                    this.close();<a name="line.359"></a>
+<FONT color="green">360</FONT>            }<a name="line.360"></a>
+<FONT color="green">361</FONT>    <a name="line.361"></a>
+<FONT color="green">362</FONT>            /**<a name="line.362"></a>
+<FONT color="green">363</FONT>             * Shows application help.<a name="line.363"></a>
+<FONT color="green">364</FONT>             */<a name="line.364"></a>
+<FONT color="green">365</FONT>            private void helpMIActionPerformed() {<a name="line.365"></a>
+<FONT color="green">366</FONT>                    String fileName = (application.getApplicationType() == ApplicationType.STANDALONE ? "alone.htm"<a name="line.366"></a>
+<FONT color="green">367</FONT>                                    : "client.htm");<a name="line.367"></a>
+<FONT color="green">368</FONT>                    fileName = "docs/user_guide/" + fileName;<a name="line.368"></a>
+<FONT color="green">369</FONT>                    JOptionPane.showMessageDialog(this, "See help file at " + fileName, "Help",<a name="line.369"></a>
+<FONT color="green">370</FONT>                                    JOptionPane.INFORMATION_MESSAGE);<a name="line.370"></a>
+<FONT color="green">371</FONT>            }<a name="line.371"></a>
+<FONT color="green">372</FONT>    <a name="line.372"></a>
+<FONT color="green">373</FONT>            /**<a name="line.373"></a>
+<FONT color="green">374</FONT>             * Shows about dialog.<a name="line.374"></a>
+<FONT color="green">375</FONT>             */<a name="line.375"></a>
+<FONT color="green">376</FONT>            private void aboutMIActionPerformed() {<a name="line.376"></a>
+<FONT color="green">377</FONT>                    JOptionPane.showMessageDialog(this,<a name="line.377"></a>
+<FONT color="green">378</FONT>                                    "Client Bodgitt and Scarper, LLC.\nPetr Shilkin 2009", "About",<a name="line.378"></a>
+<FONT color="green">379</FONT>                                    JOptionPane.INFORMATION_MESSAGE);<a name="line.379"></a>
+<FONT color="green">380</FONT>            }<a name="line.380"></a>
+<FONT color="green">381</FONT>    <a name="line.381"></a>
+<FONT color="green">382</FONT>            /**<a name="line.382"></a>
+<FONT color="green">383</FONT>             * Requests database for records in database that matches search criteria.<a name="line.383"></a>
+<FONT color="green">384</FONT>             * <a name="line.384"></a>
+<FONT color="green">385</FONT>             * @param criteriaArr<a name="line.385"></a>
+<FONT color="green">386</FONT>             *         search criteria array of string<a name="line.386"></a>
+<FONT color="green">387</FONT>             * @param exChecks<a name="line.387"></a>
+<FONT color="green">388</FONT>             *         exact search flags for name and location fields, can be<a name="line.388"></a>
+<FONT color="green">389</FONT>             *         &lt;code&gt;null&lt;/code&gt; if no exact search requested<a name="line.389"></a>
+<FONT color="green">390</FONT>             * @return table model to use in {@link JTable} component<a name="line.390"></a>
+<FONT color="green">391</FONT>             * @throws GuiException<a name="line.391"></a>
+<FONT color="green">392</FONT>             *          on any error<a name="line.392"></a>
+<FONT color="green">393</FONT>             */<a name="line.393"></a>
+<FONT color="green">394</FONT>            private RecordTableModel findRecords(String[] criteriaArr, boolean[] exChecks)<a name="line.394"></a>
+<FONT color="green">395</FONT>                            throws GuiException {<a name="line.395"></a>
+<FONT color="green">396</FONT>                    try {<a name="line.396"></a>
+<FONT color="green">397</FONT>                            RecordTableModel out = new RecordTableModel();<a name="line.397"></a>
+<FONT color="green">398</FONT>                            long[] res = application.getDBAccess().findByCriteria(criteriaArr);<a name="line.398"></a>
+<FONT color="green">399</FONT>                            nextRecNo: for (long recNo : res) {<a name="line.399"></a>
+<FONT color="green">400</FONT>                                    try {<a name="line.400"></a>
+<FONT color="green">401</FONT>                                            String[] dataArr = readRecord(recNo);<a name="line.401"></a>
+<FONT color="green">402</FONT>                                            if (exChecks != null) {<a name="line.402"></a>
+<FONT color="green">403</FONT>                                                    for (int i = 0; i &lt; exChecks.length; i++) {<a name="line.403"></a>
+<FONT color="green">404</FONT>                                                            String data = dataArr[i];<a name="line.404"></a>
+<FONT color="green">405</FONT>                                                            if (exChecks[i] &amp;&amp; !data.equals(criteriaArr[i])) {<a name="line.405"></a>
+<FONT color="green">406</FONT>                                                                    continue nextRecNo;<a name="line.406"></a>
+<FONT color="green">407</FONT>                                                            }<a name="line.407"></a>
+<FONT color="green">408</FONT>                                                    }<a name="line.408"></a>
+<FONT color="green">409</FONT>                                            }<a name="line.409"></a>
+<FONT color="green">410</FONT>                                            out.addRecord(recNo, dataArr);<a name="line.410"></a>
+<FONT color="green">411</FONT>                                    } catch (Exception e) {<a name="line.411"></a>
+<FONT color="green">412</FONT>                                            log.log(Level.SEVERE, "record already not found " + recNo);<a name="line.412"></a>
+<FONT color="green">413</FONT>                                    }<a name="line.413"></a>
+<FONT color="green">414</FONT>                            }<a name="line.414"></a>
+<FONT color="green">415</FONT>                            return out;<a name="line.415"></a>
+<FONT color="green">416</FONT>                    } catch (Exception e) {<a name="line.416"></a>
+<FONT color="green">417</FONT>                            throw new GuiException(e);<a name="line.417"></a>
+<FONT color="green">418</FONT>                    }<a name="line.418"></a>
+<FONT color="green">419</FONT>            }<a name="line.419"></a>
+<FONT color="green">420</FONT>    <a name="line.420"></a>
+<FONT color="green">421</FONT>            /**<a name="line.421"></a>
+<FONT color="green">422</FONT>             * Requests database for all records in database.<a name="line.422"></a>
+<FONT color="green">423</FONT>             * <a name="line.423"></a>
+<FONT color="green">424</FONT>             * @return table model to use in {@link JTable} component<a name="line.424"></a>
+<FONT color="green">425</FONT>             * @throws GuiException<a name="line.425"></a>
+<FONT color="green">426</FONT>             *          on any error<a name="line.426"></a>
+<FONT color="green">427</FONT>             */<a name="line.427"></a>
+<FONT color="green">428</FONT>            private RecordTableModel getRecords() throws GuiException {<a name="line.428"></a>
+<FONT color="green">429</FONT>                    return findRecords(new String[DBAccess.FIELD_SEQUENCE.length], null);<a name="line.429"></a>
+<FONT color="green">430</FONT>            }<a name="line.430"></a>
+<FONT color="green">431</FONT>    <a name="line.431"></a>
+<FONT color="green">432</FONT>            /**<a name="line.432"></a>
+<FONT color="green">433</FONT>             * Requests database to remove record with number &lt;code&gt;recNo&lt;/code&gt;.<a name="line.433"></a>
+<FONT color="green">434</FONT>             * <a name="line.434"></a>
+<FONT color="green">435</FONT>             * @param recNo<a name="line.435"></a>
+<FONT color="green">436</FONT>             *         record number<a name="line.436"></a>
+<FONT color="green">437</FONT>             * @param lockCookie<a name="line.437"></a>
+<FONT color="green">438</FONT>             *         locking cookie<a name="line.438"></a>
+<FONT color="green">439</FONT>             *@throws GuiException<a name="line.439"></a>
+<FONT color="green">440</FONT>             *          on any error<a name="line.440"></a>
+<FONT color="green">441</FONT>             */<a name="line.441"></a>
+<FONT color="green">442</FONT>            private void deleteRecord(long recNo, long lockCookie) throws GuiException {<a name="line.442"></a>
+<FONT color="green">443</FONT>                    try {<a name="line.443"></a>
+<FONT color="green">444</FONT>                            application.getDBAccess().deleteRecord(recNo, lockCookie);<a name="line.444"></a>
+<FONT color="green">445</FONT>                    } catch (Exception e) {<a name="line.445"></a>
+<FONT color="green">446</FONT>                            log.log(Level.SEVERE, "error occured during deleting record " + recNo, e);<a name="line.446"></a>
+<FONT color="green">447</FONT>                            throw new GuiException(e);<a name="line.447"></a>
+<FONT color="green">448</FONT>                    }<a name="line.448"></a>
+<FONT color="green">449</FONT>            }<a name="line.449"></a>
+<FONT color="green">450</FONT>    <a name="line.450"></a>
+<FONT color="green">451</FONT>            /**<a name="line.451"></a>
+<FONT color="green">452</FONT>             * Requests database for record creation with specified data.<a name="line.452"></a>
+<FONT color="green">453</FONT>             * <a name="line.453"></a>
+<FONT color="green">454</FONT>             * @param data<a name="line.454"></a>
+<FONT color="green">455</FONT>             *         field's array of the new record<a name="line.455"></a>
+<FONT color="green">456</FONT>             * @throws GuiException<a name="line.456"></a>
+<FONT color="green">457</FONT>             *          on any error<a name="line.457"></a>
+<FONT color="green">458</FONT>             */<a name="line.458"></a>
+<FONT color="green">459</FONT>            private long createRecord(String[] data) throws GuiException {<a name="line.459"></a>
+<FONT color="green">460</FONT>                    try {<a name="line.460"></a>
+<FONT color="green">461</FONT>                            return application.getDBAccess().createRecord(data);<a name="line.461"></a>
+<FONT color="green">462</FONT>                    } catch (Exception e) {<a name="line.462"></a>
+<FONT color="green">463</FONT>                            log.log(Level.SEVERE, "error occured during creating record", e);<a name="line.463"></a>
+<FONT color="green">464</FONT>                            throw new GuiException(e);<a name="line.464"></a>
+<FONT color="green">465</FONT>                    }<a name="line.465"></a>
+<FONT color="green">466</FONT>            }<a name="line.466"></a>
+<FONT color="green">467</FONT>    <a name="line.467"></a>
+<FONT color="green">468</FONT>            /**<a name="line.468"></a>
+<FONT color="green">469</FONT>             * Request database to lock record with number &lt;code&gt;recNo&lt;/code&gt;.<a name="line.469"></a>
+<FONT color="green">470</FONT>             * <a name="line.470"></a>
+<FONT color="green">471</FONT>             * @throws GuiException<a name="line.471"></a>
+<FONT color="green">472</FONT>             *          on any error<a name="line.472"></a>
+<FONT color="green">473</FONT>             */<a name="line.473"></a>
+<FONT color="green">474</FONT>            private long lockRecord(long recNo) throws GuiException {<a name="line.474"></a>
+<FONT color="green">475</FONT>                    try {<a name="line.475"></a>
+<FONT color="green">476</FONT>                            return application.getDBAccess().lockRecord(recNo);<a name="line.476"></a>
+<FONT color="green">477</FONT>                    } catch (Exception e) {<a name="line.477"></a>
+<FONT color="green">478</FONT>                            log.log(Level.SEVERE, "error occured during locking record " + recNo, e);<a name="line.478"></a>
+<FONT color="green">479</FONT>                            throw new GuiException(e);<a name="line.479"></a>
+<FONT color="green">480</FONT>                    }<a name="line.480"></a>
+<FONT color="green">481</FONT>            }<a name="line.481"></a>
+<FONT color="green">482</FONT>    <a name="line.482"></a>
+<FONT color="green">483</FONT>            /**<a name="line.483"></a>
+<FONT color="green">484</FONT>             * Request database to unlock record using record number &lt;code&gt;recNo&lt;/code&gt;,<a name="line.484"></a>
+<FONT color="green">485</FONT>             * and locking descriptor &lt;code&gt;lockCookie&lt;/code&gt;.<a name="line.485"></a>
+<FONT color="green">486</FONT>             * <a name="line.486"></a>
+<FONT color="green">487</FONT>             * @param recNo<a name="line.487"></a>
+<FONT color="green">488</FONT>             *         record number<a name="line.488"></a>
+<FONT color="green">489</FONT>             * @param lockCookie<a name="line.489"></a>
+<FONT color="green">490</FONT>             *         locking descriptor<a name="line.490"></a>
+<FONT color="green">491</FONT>             * @throws GuiException<a name="line.491"></a>
+<FONT color="green">492</FONT>             *          on any error<a name="line.492"></a>
+<FONT color="green">493</FONT>             */<a name="line.493"></a>
+<FONT color="green">494</FONT>            private void unlockRecord(long recNo, long lockCookie) throws GuiException {<a name="line.494"></a>
+<FONT color="green">495</FONT>                    try {<a name="line.495"></a>
+<FONT color="green">496</FONT>                            application.getDBAccess().unlock(recNo, lockCookie);<a name="line.496"></a>
+<FONT color="green">497</FONT>                    } catch (Exception e) {<a name="line.497"></a>
+<FONT color="green">498</FONT>                            log.log(Level.SEVERE, "error occured during record unlock " + recNo, e);<a name="line.498"></a>
+<FONT color="green">499</FONT>                            throw new GuiException(e);<a name="line.499"></a>
+<FONT color="green">500</FONT>                    }<a name="line.500"></a>
+<FONT color="green">501</FONT>            }<a name="line.501"></a>
+<FONT color="green">502</FONT>    <a name="line.502"></a>
+<FONT color="green">503</FONT>            /**<a name="line.503"></a>
+<FONT color="green">504</FONT>             * Request database to read record using record number &lt;code&gt;recNo&lt;/code&gt;.<a name="line.504"></a>
+<FONT color="green">505</FONT>             * <a name="line.505"></a>
+<FONT color="green">506</FONT>             * @param recNo<a name="line.506"></a>
+<FONT color="green">507</FONT>             *         record number<a name="line.507"></a>
+<FONT color="green">508</FONT>             * @return fields of record<a name="line.508"></a>
+<FONT color="green">509</FONT>             * @throws GuiException<a name="line.509"></a>
+<FONT color="green">510</FONT>             *          on any error<a name="line.510"></a>
+<FONT color="green">511</FONT>             */<a name="line.511"></a>
+<FONT color="green">512</FONT>            private String[] readRecord(long recNo) throws GuiException {<a name="line.512"></a>
+<FONT color="green">513</FONT>                    try {<a name="line.513"></a>
+<FONT color="green">514</FONT>                            String[] data = application.getDBAccess().readRecord(recNo);<a name="line.514"></a>
+<FONT color="green">515</FONT>                            return data;<a name="line.515"></a>
+<FONT color="green">516</FONT>                    } catch (Exception e) {<a name="line.516"></a>
+<FONT color="green">517</FONT>                            log.log(Level.SEVERE, "error occured during record read " + recNo, e);<a name="line.517"></a>
+<FONT color="green">518</FONT>                            throw new GuiException(e);<a name="line.518"></a>
+<FONT color="green">519</FONT>                    }<a name="line.519"></a>
+<FONT color="green">520</FONT>            }<a name="line.520"></a>
+<FONT color="green">521</FONT>    <a name="line.521"></a>
+<FONT color="green">522</FONT>            /**<a name="line.522"></a>
+<FONT color="green">523</FONT>             * Request database to update record with record number &lt;code&gt;recNo&lt;/code&gt;,<a name="line.523"></a>
+<FONT color="green">524</FONT>             * using modified fields &lt;code&gt;data&lt;/code&gt; and locking descriptor<a name="line.524"></a>
+<FONT color="green">525</FONT>             * &lt;code&gt;lockCookie&lt;/code&gt;.<a name="line.525"></a>
+<FONT color="green">526</FONT>             * <a name="line.526"></a>
+<FONT color="green">527</FONT>             * @param recNo<a name="line.527"></a>
+<FONT color="green">528</FONT>             *         record number of record<a name="line.528"></a>
+<FONT color="green">529</FONT>             * @param data<a name="line.529"></a>
+<FONT color="green">530</FONT>             *         modified fields of record<a name="line.530"></a>
+<FONT color="green">531</FONT>             * @param lockCookie<a name="line.531"></a>
+<FONT color="green">532</FONT>             *         locking descriptor<a name="line.532"></a>
+<FONT color="green">533</FONT>             * @throws GuiException<a name="line.533"></a>
+<FONT color="green">534</FONT>             *          on any error<a name="line.534"></a>
+<FONT color="green">535</FONT>             */<a name="line.535"></a>
+<FONT color="green">536</FONT>            private void updateRecord(long recNo, String[] data, long lockCookie)<a name="line.536"></a>
+<FONT color="green">537</FONT>                            throws GuiException {<a name="line.537"></a>
+<FONT color="green">538</FONT>                    try {<a name="line.538"></a>
+<FONT color="green">539</FONT>                            application.getDBAccess().updateRecord(recNo, data, lockCookie);<a name="line.539"></a>
+<FONT color="green">540</FONT>                    } catch (Exception e) {<a name="line.540"></a>
+<FONT color="green">541</FONT>                            log.log(Level.SEVERE, "error occured during record update " + recNo, e);<a name="line.541"></a>
+<FONT color="green">542</FONT>                            throw new GuiException(e);<a name="line.542"></a>
+<FONT color="green">543</FONT>                    }<a name="line.543"></a>
+<FONT color="green">544</FONT>            }<a name="line.544"></a>
+<FONT color="green">545</FONT>    <a name="line.545"></a>
+<FONT color="green">546</FONT>            /**<a name="line.546"></a>
+<FONT color="green">547</FONT>             * Updates row selection in table after table model changed<a name="line.547"></a>
+<FONT color="green">548</FONT>             * <a name="line.548"></a>
+<FONT color="green">549</FONT>             * @param rowNo<a name="line.549"></a>
+<FONT color="green">550</FONT>             *         preferred row number<a name="line.550"></a>
+<FONT color="green">551</FONT>             */<a name="line.551"></a>
+<FONT color="green">552</FONT>            private void updateRowSelection(int rowNo) {<a name="line.552"></a>
+<FONT color="green">553</FONT>                    int rcount = 0;<a name="line.553"></a>
+<FONT color="green">554</FONT>                    if ((rcount = mainTable.getModel().getRowCount()) &gt; 0) {<a name="line.554"></a>
+<FONT color="green">555</FONT>                            if (rcount &gt; rowNo) {<a name="line.555"></a>
+<FONT color="green">556</FONT>                                    mainTable.getSelectionModel().setSelectionInterval(rowNo, rowNo);<a name="line.556"></a>
+<FONT color="green">557</FONT>                            } else {<a name="line.557"></a>
+<FONT color="green">558</FONT>                                    mainTable.getSelectionModel().setSelectionInterval(rcount - 1, rcount - 1);<a name="line.558"></a>
+<FONT color="green">559</FONT>                            }<a name="line.559"></a>
+<FONT color="green">560</FONT>                    }<a name="line.560"></a>
+<FONT color="green">561</FONT>            }<a name="line.561"></a>
+<FONT color="green">562</FONT>    <a name="line.562"></a>
+<FONT color="green">563</FONT>            /*<a name="line.563"></a>
+<FONT color="green">564</FONT>             * ACTION LISTENERS CLASSES FOR MENU ITEMS<a name="line.564"></a>
+<FONT color="green">565</FONT>             */<a name="line.565"></a>
+<FONT color="green">566</FONT>            /**<a name="line.566"></a>
+<FONT color="green">567</FONT>             * ActionListener class for Book (Unbook) operation.<a name="line.567"></a>
+<FONT color="green">568</FONT>             */<a name="line.568"></a>
+<FONT color="green">569</FONT>            private class BookUnbookActionListener implements ActionListener {<a name="line.569"></a>
+<FONT color="green">570</FONT>                    /**<a name="line.570"></a>
+<FONT color="green">571</FONT>                     * {@inheritDoc}<a name="line.571"></a>
+<FONT color="green">572</FONT>                     */<a name="line.572"></a>
+<FONT color="green">573</FONT>                    public void actionPerformed(ActionEvent e) {<a name="line.573"></a>
+<FONT color="green">574</FONT>                            int row;<a name="line.574"></a>
+<FONT color="green">575</FONT>                            if ((row = mainTable.getSelectedRow()) != -1) {<a name="line.575"></a>
+<FONT color="green">576</FONT>                                    row = mainTable.convertRowIndexToModel(row);<a name="line.576"></a>
+<FONT color="green">577</FONT>                                    RecordTableModel tableData = (RecordTableModel) mainTable.getModel();<a name="line.577"></a>
+<FONT color="green">578</FONT>                                    long recNo = tableData.getRecNoByRow(row);<a name="line.578"></a>
+<FONT color="green">579</FONT>                                    long lockCookie = 0;<a name="line.579"></a>
+<FONT color="green">580</FONT>                                    try {<a name="line.580"></a>
+<FONT color="green">581</FONT>                                            int res = JOptionPane.showConfirmDialog(ClientWindow.this,<a name="line.581"></a>
+<FONT color="green">582</FONT>                                                            "Do you really want to book/unbook record", "Are you sure?",<a name="line.582"></a>
+<FONT color="green">583</FONT>                                                            JOptionPane.YES_NO_OPTION);<a name="line.583"></a>
+<FONT color="green">584</FONT>                                            if (res == JOptionPane.YES_OPTION) {<a name="line.584"></a>
+<FONT color="green">585</FONT>                                                    lockCookie = lockRecord(recNo);<a name="line.585"></a>
+<FONT color="green">586</FONT>                                                    String[] data = readRecord(recNo);<a name="line.586"></a>
+<FONT color="green">587</FONT>                                                    if (OperationDialogPanel.showDialog(data, DBAccess.FIELD_SEQUENCE,<a name="line.587"></a>
+<FONT color="green">588</FONT>                                                                    OperationType.BOOK)) {<a name="line.588"></a>
+<FONT color="green">589</FONT>                                                            updateRecord(recNo, data, lockCookie);<a name="line.589"></a>
+<FONT color="green">590</FONT>                                                            tableData.update(row, readRecord(recNo));<a name="line.590"></a>
+<FONT color="green">591</FONT>                                                    }<a name="line.591"></a>
+<FONT color="green">592</FONT>                                            }<a name="line.592"></a>
+<FONT color="green">593</FONT>                                    } catch (GuiException ex) {<a name="line.593"></a>
+<FONT color="green">594</FONT>                                            application.handleException("Error occured when book/unbook record\n"<a name="line.594"></a>
+<FONT color="green">595</FONT>                                                            + ex.getMessage());<a name="line.595"></a>
+<FONT color="green">596</FONT>                                    } finally {<a name="line.596"></a>
+<FONT color="green">597</FONT>                                            if (lockCookie != 0) {<a name="line.597"></a>
+<FONT color="green">598</FONT>                                                    try {<a name="line.598"></a>
+<FONT color="green">599</FONT>                                                            unlockRecord(recNo, lockCookie);<a name="line.599"></a>
+<FONT color="green">600</FONT>                                                    } catch (GuiException ex) {<a name="line.600"></a>
+<FONT color="green">601</FONT>                                                            application.handleException("Error occured when unlocking record\n"<a name="line.601"></a>
+<FONT color="green">602</FONT>                                                                            + ex.getMessage());<a name="line.602"></a>
+<FONT color="green">603</FONT>                                                    }<a name="line.603"></a>
+<FONT color="green">604</FONT>                                            }<a name="line.604"></a>
+<FONT color="green">605</FONT>                                    }<a name="line.605"></a>
+<FONT color="green">606</FONT>                            }<a name="line.606"></a>
+<FONT color="green">607</FONT>                    }<a name="line.607"></a>
+<FONT color="green">608</FONT>            }<a name="line.608"></a>
+<FONT color="green">609</FONT>    <a name="line.609"></a>
+<FONT color="green">610</FONT>            /**<a name="line.610"></a>
+<FONT color="green">611</FONT>             * ActionListener class for Edit (Modify) operation.<a name="line.611"></a>
+<FONT color="green">612</FONT>             */<a name="line.612"></a>
+<FONT color="green">613</FONT>            private class EditActionListener implements ActionListener {<a name="line.613"></a>
+<FONT color="green">614</FONT>                    /**<a name="line.614"></a>
+<FONT color="green">615</FONT>                     * {@inheritDoc}<a name="line.615"></a>
+<FONT color="green">616</FONT>                     */<a name="line.616"></a>
+<FONT color="green">617</FONT>                    public void actionPerformed(ActionEvent e) {<a name="line.617"></a>
+<FONT color="green">618</FONT>                            int row;<a name="line.618"></a>
+<FONT color="green">619</FONT>                            if ((row = mainTable.getSelectedRow()) != -1) {<a name="line.619"></a>
+<FONT color="green">620</FONT>                                    row = mainTable.convertRowIndexToModel(row);<a name="line.620"></a>
+<FONT color="green">621</FONT>                                    RecordTableModel tableData = (RecordTableModel) mainTable.getModel();<a name="line.621"></a>
+<FONT color="green">622</FONT>                                    long recNo = tableData.getRecNoByRow(row);<a name="line.622"></a>
+<FONT color="green">623</FONT>                                    long lockCookie = 0;<a name="line.623"></a>
+<FONT color="green">624</FONT>                                    try {<a name="line.624"></a>
+<FONT color="green">625</FONT>                                            int res = JOptionPane.showConfirmDialog(ClientWindow.this,<a name="line.625"></a>
+<FONT color="green">626</FONT>                                                            "Do you really want to edit record", "Are you sure?",<a name="line.626"></a>
+<FONT color="green">627</FONT>                                                            JOptionPane.YES_NO_OPTION);<a name="line.627"></a>
+<FONT color="green">628</FONT>                                            if (res == JOptionPane.YES_OPTION) {<a name="line.628"></a>
+<FONT color="green">629</FONT>                                                    lockCookie = lockRecord(recNo);<a name="line.629"></a>
+<FONT color="green">630</FONT>                                                    String[] data = readRecord(recNo);<a name="line.630"></a>
+<FONT color="green">631</FONT>    <a name="line.631"></a>
+<FONT color="green">632</FONT>                                                    if (OperationDialogPanel.showDialog(data, DBAccess.FIELD_SEQUENCE,<a name="line.632"></a>
+<FONT color="green">633</FONT>                                                                    OperationType.MODIFY)) {<a name="line.633"></a>
+<FONT color="green">634</FONT>                                                            updateRecord(recNo, data, lockCookie);<a name="line.634"></a>
+<FONT color="green">635</FONT>                                                            tableData.update(row, readRecord(recNo));<a name="line.635"></a>
+<FONT color="green">636</FONT>                                                    }<a name="line.636"></a>
+<FONT color="green">637</FONT>                                            }<a name="line.637"></a>
+<FONT color="green">638</FONT>                                    } catch (GuiException ex) {<a name="line.638"></a>
+<FONT color="green">639</FONT>                                            application.handleException("Error occured when editing record\n"<a name="line.639"></a>
+<FONT color="green">640</FONT>                                                            + ex.getMessage());<a name="line.640"></a>
+<FONT color="green">641</FONT>                                    } finally {<a name="line.641"></a>
+<FONT color="green">642</FONT>                                            if (lockCookie != 0) {<a name="line.642"></a>
+<FONT color="green">643</FONT>                                                    try {<a name="line.643"></a>
+<FONT color="green">644</FONT>                                                            unlockRecord(recNo, lockCookie);<a name="line.644"></a>
+<FONT color="green">645</FONT>                                                    } catch (GuiException ex) {<a name="line.645"></a>
+<FONT color="green">646</FONT>                                                            application.handleException("Error occured when unlocking record\n"<a name="line.646"></a>
+<FONT color="green">647</FONT>                                                                            + ex.getMessage());<a name="line.647"></a>
+<FONT color="green">648</FONT>                                                    }<a name="line.648"></a>
+<FONT color="green">649</FONT>                                            }<a name="line.649"></a>
+<FONT color="green">650</FONT>                                    }<a name="line.650"></a>
+<FONT color="green">651</FONT>                            }<a name="line.651"></a>
+<FONT color="green">652</FONT>                    }<a name="line.652"></a>
+<FONT color="green">653</FONT>            }<a name="line.653"></a>
+<FONT color="green">654</FONT>    <a name="line.654"></a>
+<FONT color="green">655</FONT>            /**<a name="line.655"></a>
+<FONT color="green">656</FONT>             * ActionListener class for Create operation.<a name="line.656"></a>
+<FONT color="green">657</FONT>             */<a name="line.657"></a>
+<FONT color="green">658</FONT>            private class CreateActionListener implements ActionListener {<a name="line.658"></a>
+<FONT color="green">659</FONT>                    /**<a name="line.659"></a>
+<FONT color="green">660</FONT>                     * {@inheritDoc}<a name="line.660"></a>
+<FONT color="green">661</FONT>                     */<a name="line.661"></a>
+<FONT color="green">662</FONT>                    public void actionPerformed(ActionEvent e) {<a name="line.662"></a>
+<FONT color="green">663</FONT>                            try {<a name="line.663"></a>
+<FONT color="green">664</FONT>                                    int res = JOptionPane.showConfirmDialog(ClientWindow.this,<a name="line.664"></a>
+<FONT color="green">665</FONT>                                                    "Do you really want to create record", "Are you sure?",<a name="line.665"></a>
+<FONT color="green">666</FONT>                                                    JOptionPane.YES_NO_OPTION);<a name="line.666"></a>
+<FONT color="green">667</FONT>                                    if (res == JOptionPane.YES_OPTION) {<a name="line.667"></a>
+<FONT color="green">668</FONT>                                            String[] data = new String[DBAccess.FIELD_SEQUENCE.length];<a name="line.668"></a>
+<FONT color="green">669</FONT>                                            if (OperationDialogPanel.showDialog(data, DBAccess.FIELD_SEQUENCE,<a name="line.669"></a>
+<FONT color="green">670</FONT>                                                            OperationType.CREATE)) {<a name="line.670"></a>
+<FONT color="green">671</FONT>                                                    long recNo = createRecord(data);<a name="line.671"></a>
+<FONT color="green">672</FONT>                                                    data = readRecord(recNo);<a name="line.672"></a>
+<FONT color="green">673</FONT>                                                    RecordTableModel tableData = (RecordTableModel) mainTable.getModel();<a name="line.673"></a>
+<FONT color="green">674</FONT>                                                    tableData.addRecord(recNo, data);<a name="line.674"></a>
+<FONT color="green">675</FONT>                                            }<a name="line.675"></a>
+<FONT color="green">676</FONT>                                    }<a name="line.676"></a>
+<FONT color="green">677</FONT>                            } catch (GuiException ex) {<a name="line.677"></a>
+<FONT color="green">678</FONT>                                    application.handleException("Error occured when creating record\n"<a name="line.678"></a>
+<FONT color="green">679</FONT>                                                    + ex.getMessage());<a name="line.679"></a>
+<FONT color="green">680</FONT>                            }<a name="line.680"></a>
+<FONT color="green">681</FONT>                    }<a name="line.681"></a>
+<FONT color="green">682</FONT>            }<a name="line.682"></a>
+<FONT color="green">683</FONT>    <a name="line.683"></a>
+<FONT color="green">684</FONT>            /**<a name="line.684"></a>
+<FONT color="green">685</FONT>             * AñtionListener class for Delete operation.<a name="line.685"></a>
+<FONT color="green">686</FONT>             */<a name="line.686"></a>
+<FONT color="green">687</FONT>            private class DeleteActionListener implements ActionListener {<a name="line.687"></a>
+<FONT color="green">688</FONT>                    /**<a name="line.688"></a>
+<FONT color="green">689</FONT>                     * {@inheritDoc}<a name="line.689"></a>
+<FONT color="green">690</FONT>                     */<a name="line.690"></a>
+<FONT color="green">691</FONT>                    public void actionPerformed(ActionEvent e) {<a name="line.691"></a>
+<FONT color="green">692</FONT>                            int row;<a name="line.692"></a>
+<FONT color="green">693</FONT>                            if ((row = mainTable.getSelectedRow()) != -1) {<a name="line.693"></a>
+<FONT color="green">694</FONT>                                    row = mainTable.convertRowIndexToModel(row);<a name="line.694"></a>
+<FONT color="green">695</FONT>                                    RecordTableModel tableData = (RecordTableModel) mainTable.getModel();<a name="line.695"></a>
+<FONT color="green">696</FONT>                                    long recNo = tableData.getRecNoByRow(row);<a name="line.696"></a>
+<FONT color="green">697</FONT>                                    long lockCookie = 0;<a name="line.697"></a>
+<FONT color="green">698</FONT>                                    try {<a name="line.698"></a>
+<FONT color="green">699</FONT>                                            int res = JOptionPane.showConfirmDialog(ClientWindow.this,<a name="line.699"></a>
+<FONT color="green">700</FONT>                                                            "Do you really want to delete record", "Are you sure?",<a name="line.700"></a>
+<FONT color="green">701</FONT>                                                            JOptionPane.YES_NO_OPTION);<a name="line.701"></a>
+<FONT color="green">702</FONT>                                            if (res == JOptionPane.YES_OPTION) {<a name="line.702"></a>
+<FONT color="green">703</FONT>                                                    lockCookie = lockRecord(recNo);<a name="line.703"></a>
+<FONT color="green">704</FONT>                                                    deleteRecord(recNo, lockCookie);<a name="line.704"></a>
+<FONT color="green">705</FONT>                                                    tableData.deleteRow(row);<a name="line.705"></a>
+<FONT color="green">706</FONT>                                                    updateRowSelection(row);<a name="line.706"></a>
+<FONT color="green">707</FONT>                                            }<a name="line.707"></a>
+<FONT color="green">708</FONT>                                    } catch (GuiException ex) {<a name="line.708"></a>
+<FONT color="green">709</FONT>                                            application.handleException("Error occured when deleting record\n"<a name="line.709"></a>
+<FONT color="green">710</FONT>                                                            + ex.getMessage());<a name="line.710"></a>
+<FONT color="green">711</FONT>                                    } finally {<a name="line.711"></a>
+<FONT color="green">712</FONT>                                            if (lockCookie != 0) {<a name="line.712"></a>
+<FONT color="green">713</FONT>                                                    try {<a name="line.713"></a>
+<FONT color="green">714</FONT>                                                            unlockRecord(recNo, lockCookie);<a name="line.714"></a>
+<FONT color="green">715</FONT>                                                    } catch (GuiException ex) {<a name="line.715"></a>
+<FONT color="green">716</FONT>                                                            application.handleException("Error occured when unlocking record\n"<a name="line.716"></a>
+<FONT color="green">717</FONT>                                                                            + ex.getMessage());<a name="line.717"></a>
+<FONT color="green">718</FONT>                                                    }<a name="line.718"></a>
+<FONT color="green">719</FONT>                                            }<a name="line.719"></a>
+<FONT color="green">720</FONT>                                    }<a name="line.720"></a>
+<FONT color="green">721</FONT>                            }<a name="line.721"></a>
+<FONT color="green">722</FONT>                    }<a name="line.722"></a>
+<FONT color="green">723</FONT>            }<a name="line.723"></a>
+<FONT color="green">724</FONT>    <a name="line.724"></a>
+<FONT color="green">725</FONT>            /**<a name="line.725"></a>
+<FONT color="green">726</FONT>             * ActionListener class for Find operation.<a name="line.726"></a>
+<FONT color="green">727</FONT>             */<a name="line.727"></a>
+<FONT color="green">728</FONT>            private class FindActionListener implements ActionListener {<a name="line.728"></a>
+<FONT color="green">729</FONT>                    /**<a name="line.729"></a>
+<FONT color="green">730</FONT>                     * {@inheritDoc}<a name="line.730"></a>
+<FONT color="green">731</FONT>                     */<a name="line.731"></a>
+<FONT color="green">732</FONT>                    public void actionPerformed(ActionEvent e) {<a name="line.732"></a>
+<FONT color="green">733</FONT>                            int res = JOptionPane.showConfirmDialog(ClientWindow.this,<a name="line.733"></a>
+<FONT color="green">734</FONT>                                            "Do you really want to find record", "Are you sure?",<a name="line.734"></a>
+<FONT color="green">735</FONT>                                            JOptionPane.YES_NO_OPTION);<a name="line.735"></a>
+<FONT color="green">736</FONT>                            try {<a name="line.736"></a>
+<FONT color="green">737</FONT>                                    if (res == JOptionPane.YES_OPTION) {<a name="line.737"></a>
+<FONT color="green">738</FONT>                                            final boolean[] checks = new boolean[] { false, false };<a name="line.738"></a>
+<FONT color="green">739</FONT>                                            String[] data = new String[DBAccess.FIELD_SEQUENCE.length];<a name="line.739"></a>
+<FONT color="green">740</FONT>                                            if (OperationDialogPanel.showDialog(data, DBAccess.FIELD_SEQUENCE, checks,<a name="line.740"></a>
+<FONT color="green">741</FONT>                                                            OperationType.FIND)) {<a name="line.741"></a>
+<FONT color="green">742</FONT>                                                    TableModel tableData = findRecords(data, checks);<a name="line.742"></a>
+<FONT color="green">743</FONT>                                                    mainTable.setModel(tableData);<a name="line.743"></a>
+<FONT color="green">744</FONT>                                                    updateRowSelection(0);<a name="line.744"></a>
+<FONT color="green">745</FONT>                                            }<a name="line.745"></a>
+<FONT color="green">746</FONT>                                    }<a name="line.746"></a>
+<FONT color="green">747</FONT>                            } catch (GuiException ex) {<a name="line.747"></a>
+<FONT color="green">748</FONT>                                    application.handleException("Error occured finding records\n"<a name="line.748"></a>
+<FONT color="green">749</FONT>                                                    + ex.getMessage());<a name="line.749"></a>
+<FONT color="green">750</FONT>                            }<a name="line.750"></a>
+<FONT color="green">751</FONT>                    }<a name="line.751"></a>
+<FONT color="green">752</FONT>            }<a name="line.752"></a>
+<FONT color="green">753</FONT>    }<a name="line.753"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>
